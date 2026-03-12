@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --app-bg: #f4f4f6;
+  --app-card: #ffffff;
+  --app-border: #e4e4e8;
+  --app-text: #0c0c0e;
+  --app-muted: #666670;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dark {
+  --app-bg: #0c0c0e;
+  --app-card: #131316;
+  --app-border: #27272e;
+  --app-text: #f0eff4;
+  --app-muted: #8b8a96;
+}
+
+html {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+body {
+  margin: 0;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Hide scrollbars but keep scrolling */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@keyframes scroll-horizontal {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-horizontal {
+  animation: scroll-horizontal 25s linear infinite;
+}
+
+/* Landing micro-interactions */
+.landing-nav-link {
+  position: relative;
+}
+.landing-nav-link::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 0;
+  height: 1.5px;
+  background: currentColor;
+  transition: width 0.2s ease, left 0.2s ease;
+}
+.landing-nav-link:hover::after {
+  width: 100%;
+  left: 0;
+}
+.landing-btn-primary {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.landing-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+.dark .landing-btn-primary:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.landing-btn-primary:active {
+  transform: translateY(0);
+}
+.landing-btn-secondary:hover {
+  transform: translateY(-1px);
+}
+.landing-card-hover {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.2s ease;
+}
+.landing-card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.15);
+}
+.dark .landing-card-hover:hover {
+  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.35);
+}
+.landing-icon-bump:hover {
+  transform: scale(1.05);
+}
+.landing-theme-btn:hover {
+  transform: rotate(12deg) scale(1.05);
+}
+.landing-theme-btn:active {
+  transform: rotate(0) scale(0.95);
+}
