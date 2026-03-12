@@ -1,5 +1,6 @@
-import { Moon, Sun } from 'lucide-react'
+import { Moon, Sun, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { useThemeStore } from '@/stores/useThemeStore'
+import { useSidebarStore } from '@/stores/useSidebarStore'
 import { useAuth } from '@/context/AuthContext'
 
 export interface TopBarProps {
@@ -9,12 +10,24 @@ export interface TopBarProps {
 export function TopBar({ title }: TopBarProps): React.ReactElement {
   const theme = useThemeStore((s) => s.theme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
+  const collapsed = useSidebarStore((s) => s.collapsed)
+  const toggleSidebar = useSidebarStore((s) => s.toggle)
   const { user } = useAuth()
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[var(--app-border)] bg-[var(--app-bg)] px-7">
-      <h1 className="font-display text-[22px] font-bold text-[var(--app-text)]">{title}</h1>
-      <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-[var(--app-border)] bg-[var(--app-bg)] px-7">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="landing-theme-btn flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--app-muted)] transition-colors hover:bg-[var(--app-card)] hover:text-[var(--app-text)]"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+        </button>
+        <h1 className="truncate font-display text-[22px] font-bold text-[var(--app-text)]">{title}</h1>
+      </div>
+      <div className="flex shrink-0 items-center gap-4">
         <button
           type="button"
           onClick={toggleTheme}

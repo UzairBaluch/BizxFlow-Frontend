@@ -85,18 +85,31 @@ export function Sidebar(): React.ReactElement {
       initial={false}
       animate={{ width: collapsed ? 72 : 256 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
-      className="fixed left-0 top-0 z-40 flex h-full flex-col border-r border-[var(--app-border)] bg-[var(--app-card)] shadow-sm"
+      className="fixed left-0 top-0 z-40 flex h-full flex-col overflow-hidden border-r border-[var(--app-border)] bg-[var(--app-card)] shadow-sm"
     >
-      {/* Logo */}
-      <div className="flex h-16 shrink-0 items-center gap-3 border-b border-[var(--app-border)] px-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--app-text)] text-[var(--app-bg)] font-display font-bold text-sm shadow-sm">
-          B
-        </div>
+      {/* Top: landing-style collapse button only (no logo), then app name when expanded */}
+      <div
+        className={cn(
+          'flex h-16 shrink-0 items-center border-b border-[var(--app-border)]',
+          collapsed ? 'justify-center px-2' : 'gap-2 px-3'
+        )}
+      >
+        <button
+          type="button"
+          onClick={toggle}
+          className="landing-theme-btn flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--app-muted)] transition-colors hover:bg-[var(--app-card)] hover:text-[var(--app-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-text)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-card)]"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          <ChevronLeft className={cn('h-5 w-5 shrink-0', collapsed && 'rotate-180')} />
+        </button>
         <motion.span
           initial={false}
           animate={{ opacity: collapsed ? 0 : 1 }}
           transition={{ duration: 0.1 }}
-          className="overflow-hidden whitespace-nowrap font-display text-lg font-bold tracking-tight text-[var(--app-text)]"
+          className={cn(
+            'overflow-hidden whitespace-nowrap font-display text-lg font-bold tracking-tight text-[var(--app-text)]',
+            collapsed ? 'w-0' : 'min-w-0 flex-1'
+          )}
         >
           BizxFlow
         </motion.span>
@@ -178,9 +191,14 @@ export function Sidebar(): React.ReactElement {
         </div>
       </nav>
 
-      {/* User & actions */}
-      <div className={cn('shrink-0 border-t border-[var(--app-border)] bg-[var(--app-bg)]/50 p-3', collapsed && 'flex flex-col items-center')}>
-        <div className={cn('flex items-center gap-3 rounded-xl bg-[var(--app-card)] border border-[var(--app-border)] p-3', collapsed && 'justify-center p-2')}>
+      {/* User & actions — constrain width so "Demo User" doesn't overflow */}
+      <div className={cn('shrink-0 overflow-hidden border-t border-[var(--app-border)] bg-[var(--app-bg)]/50 p-3', collapsed && 'flex flex-col items-center')}>
+        <div
+          className={cn(
+            'flex min-w-0 items-center gap-3 rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] p-3',
+            collapsed && 'justify-center p-2'
+          )}
+        >
           <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-[var(--app-border)] bg-[var(--app-border)] ring-2 ring-[var(--app-card)]">
             {user?.profilePicture ? (
               <img src={user.profilePicture} alt="" className="h-full w-full object-cover" />
@@ -190,26 +208,17 @@ export function Sidebar(): React.ReactElement {
               </span>
             )}
           </div>
-          <motion.div initial={false} animate={{ opacity: collapsed ? 0 : 1 }} transition={{ duration: 0.1 }} className="min-w-0 flex-1 overflow-hidden">
-            <p className="truncate font-body text-sm font-semibold text-[var(--app-text)]">{user?.fullName}</p>
-            <p className={cn('font-body text-[10px] font-medium uppercase tracking-wider text-[var(--app-muted)]', collapsed && 'sr-only')}>{user?.role}</p>
+          <motion.div
+            initial={false}
+            animate={{ opacity: collapsed ? 0 : 1 }}
+            transition={{ duration: 0.1 }}
+            className="min-w-0 flex-1 overflow-hidden"
+          >
+            <p className="truncate font-body text-sm font-semibold text-[var(--app-text)]">{user?.fullName ?? 'User'}</p>
+            <p className={cn('truncate font-body text-[10px] font-medium uppercase tracking-wider text-[var(--app-muted)]', collapsed && 'sr-only')}>{user?.role ?? ''}</p>
           </motion.div>
         </div>
         <div className={cn('mt-2 flex gap-1', collapsed && 'flex-col')}>
-          <button
-            type="button"
-            onClick={toggle}
-            className={cn(
-              'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 font-body text-xs font-medium text-[var(--app-muted)] transition-colors hover:bg-[var(--app-border)] hover:text-[var(--app-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-text)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-card)]',
-              collapsed && 'py-2'
-            )}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            <ChevronLeft className={cn('h-4 w-4 shrink-0', collapsed && 'rotate-180')} />
-            <motion.span initial={false} animate={{ opacity: collapsed ? 0 : 1 }} transition={{ duration: 0.1 }} className="overflow-hidden whitespace-nowrap">
-              Collapse
-            </motion.span>
-          </button>
           <button
             type="button"
             onClick={handleLogout}

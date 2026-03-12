@@ -11,11 +11,22 @@ export interface AppLayoutProps {
 
 export function AppLayout({ title, children }: AppLayoutProps): React.ReactElement {
   const collapsed = useSidebarStore((s) => s.collapsed)
+  const setCollapsed = useSidebarStore((s) => s.setCollapsed)
   const sidebarWidth = collapsed ? 72 : 256
 
   return (
     <div className="flex min-h-screen bg-[var(--app-bg)]">
       <Sidebar />
+      {/* Click-outside overlay: when expanded, clicking main area collapses sidebar (mobile + desktop) */}
+      {!collapsed && (
+        <button
+          type="button"
+          aria-label="Close sidebar"
+          className="fixed inset-0 z-30 bg-black/20 md:bg-transparent"
+          style={{ left: sidebarWidth }}
+          onClick={() => setCollapsed(true)}
+        />
+      )}
       <div
         className="flex flex-1 flex-col transition-[margin] duration-200 ease-in-out"
         style={{ marginLeft: sidebarWidth }}
