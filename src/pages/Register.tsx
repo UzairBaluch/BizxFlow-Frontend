@@ -33,7 +33,7 @@ export function RegisterPage(): React.ReactElement {
     setSubmitting(false)
     if (result.ok) {
       addToast('Account created.')
-      navigate('/dashboard', { replace: true })
+      setTimeout(() => navigate('/dashboard', { replace: true }), 0)
     } else {
       addToast(result.message, 'error')
     }

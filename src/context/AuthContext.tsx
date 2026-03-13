@@ -66,18 +66,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(async (email: string, password: string, fullName: string, role?: import('../types/api').Role): Promise<AuthResult> => {
     try {
       const res = await api.auth.register({ email, password, fullName, role });
-      if (res.success && res.data) {
-        const data = res.data as { user?: User; accessToken?: string; token?: string };
-        const token = data.accessToken ?? data.token;
-        if (token) {
-          localStorage.setItem(STORAGE_KEY, token);
-          setToken(token);
-          setUserState(data.user ?? null);
-          return { ok: true };
+      if (!res.success) {
+        const message = 'message' in res ? res.message : 'Registration failed. Please try again.';
+        return { ok: false, message };
+      }
+      const raw = res as { data?: { user?: User; accessToken?: string; token?: string }; user?: User; accessToken?: string; token?: string };
+      const data = raw.data ?? raw;
+      let token = data.accessToken ?? data.token ?? raw.accessToken ?? raw.token;
+      let user = data.user ?? raw.user;
+      if (!token && user) {
+        const loginRes = await api.auth.login({ email, password });
+        if (loginRes.success && loginRes.data) {
+          const loginData = loginRes.data as { user?: User; accessToken?: string; token?: string };
+          token = loginData.accessToken ?? loginData.token;
+          user = user ?? loginData.user;
         }
       }
-      const message = !res.success && 'message' in res ? res.message : 'Registration failed. Please try again.';
-      return { ok: false, message };
+      if (token) {
+        localStorage.setItem(STORAGE_KEY, token);
+        setToken(token);
+        setUserState(user ?? null);
+        return { ok: true };
+      }
+      return { ok: false, message: 'Registration failed. Please try again.' };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Network error. Please try again.';
       return { ok: false, message };

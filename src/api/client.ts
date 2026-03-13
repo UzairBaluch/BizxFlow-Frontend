@@ -26,12 +26,17 @@ export async function apiRequest<T>(
   const res = await fetch(url, { ...init, headers, credentials: 'omit' });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
+    const rawMessage =
+      json.message ?? json.error ?? json.msg ?? (Array.isArray(json.errors) && json.errors[0]?.message ? json.errors[0].message : null);
     const message =
-      json.message ||
-      (res.status >= 500 ? 'Server error. Please try again later.' : res.statusText || 'Request failed');
+      typeof rawMessage === 'string'
+        ? rawMessage
+        : res.status >= 500
+          ? 'Server error. Please try again later.'
+          : res.statusText || 'Request failed';
     return {
       success: false,
-      message: typeof message === 'string' ? message : 'Request failed',
+      message,
     };
   }
   return json as ApiResponse<T>;
