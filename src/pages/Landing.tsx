@@ -730,12 +730,9 @@ export function LandingPage(): React.ReactElement {
               </ul>
             </div>
           </div>
-          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-[var(--app-border)] pt-8 sm:flex-row">
+          <div className="mt-10 border-t border-[var(--app-border)] pt-8">
             <p className="font-body text-xs text-[var(--app-muted)]">
               © {new Date().getFullYear()} BizxFlow. All rights reserved.
-            </p>
-            <p className="font-body text-xs text-[var(--app-muted)]">
-              Deployed on Railway
             </p>
           </div>
         </div>

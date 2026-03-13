@@ -1,5 +1,6 @@
 import { Navigate, Route, BrowserRouter, Routes } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LandingPage } from '@/pages/Landing'
 import { DashboardPage } from '@/pages/Dashboard'
 import { TasksPage } from '@/pages/Tasks'
@@ -27,127 +28,157 @@ export default function App(): React.ReactElement {
         <Route
           path="/dashboard"
           element={
-            <AppLayout title="Dashboard">
-              <DashboardPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Dashboard">
+                <DashboardPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/tasks"
           element={
-            <AppLayout title="Tasks">
-              <TasksPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Tasks">
+                <TasksPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/leave"
           element={
-            <AppLayout title="Leave">
-              <LeavePage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Leave">
+                <LeavePage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/attendance"
           element={
-            <AppLayout title="Attendance">
-              <AttendancePage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Attendance">
+                <AttendancePage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/users"
           element={
-            <AppLayout title="Users">
-              <UsersPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Users">
+                <UsersPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/meetings"
           element={
-            <AppLayout title="Meetings">
-              <MeetingsPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Meetings">
+                <MeetingsPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/chat"
           element={
-            <AppLayout title="Team Chat">
-              <ChatPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Team Chat">
+                <ChatPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/briefing"
           element={
-            <AppLayout title="AI Briefing">
-              <BriefingPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="AI Briefing">
+                <BriefingPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/notifications"
           element={
-            <AppLayout title="Notifications">
-              <NotificationsPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Notifications">
+                <NotificationsPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/community"
           element={
-            <AppLayout title="Community">
-              <CommunityPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Community">
+                <CommunityPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/analytics"
           element={
-            <AppLayout title="Performance Insights">
-              <AnalyticsPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Performance Insights">
+                <AnalyticsPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/announcements"
           element={
-            <AppLayout title="Announcements">
-              <AnnouncementsPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Announcements">
+                <AnnouncementsPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/mood"
           element={
-            <AppLayout title="Mood Check-in">
-              <MoodCheckInPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Mood Check-in">
+                <MoodCheckInPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/end-of-day"
           element={
-            <AppLayout title="End-of-Day Report">
-              <EndOfDayReportPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="End-of-Day Report">
+                <EndOfDayReportPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/profile"
           element={
-            <AppLayout title="Profile">
-              <ProfilePage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout title="Profile">
+                <ProfilePage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/settings" element={<Navigate to="/profile" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )

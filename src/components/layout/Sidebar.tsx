@@ -53,8 +53,8 @@ const ACCOUNT_NAV = [
 // Settings route redirects to /profile
 
 function roleFromString(r: string): Role {
-  if (r === 'admin') return Role.Admin
-  if (r === 'manager') return Role.Manager
+  if (r === 'Admin') return Role.Admin
+  if (r === 'Manager') return Role.Manager
   return Role.Employee
 }
 
@@ -69,7 +69,7 @@ export function Sidebar(): React.ReactElement {
 
   function handleLogout(): void {
     logout()
-    navigate('/dashboard')
+    navigate('/', { replace: true })
   }
 
   const navLinkClass = (isActive: boolean) =>

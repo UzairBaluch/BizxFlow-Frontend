@@ -4,14 +4,6 @@ import * as api from '../api/client';
 
 const STORAGE_KEY = 'accessToken';
 
-const DEMO_USER: User = {
-  _id: 'demo',
-  email: 'demo@bizxflow.app',
-  fullName: 'Demo User',
-  role: 'admin',
-  profilePicture: undefined,
-};
-
 type AuthState = {
   user: User | null;
   loading: boolean;
@@ -39,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUser = useCallback(async () => {
     const t = localStorage.getItem(STORAGE_KEY);
     if (!t) {
-      setUserState(DEMO_USER);
+      setUserState(null);
       setLoading(false);
       return;
     }
@@ -50,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       localStorage.removeItem(STORAGE_KEY);
       setToken(null);
-      setUserState(DEMO_USER);
+      setUserState(null);
     }
     setLoading(false);
   }, []);
@@ -72,26 +64,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(async (email: string, password: string, fullName: string, role?: import('../types/api').Role): Promise<AuthResult> => {
-    const res = await api.auth.register({ email, password, fullName, role });
-    if (res.success && res.data?.accessToken) {
-      localStorage.setItem(STORAGE_KEY, res.data.accessToken);
-      setToken(res.data.accessToken);
-      setUserState(res.data.user ?? null);
-      return { ok: true };
+    try {
+      const res = await api.auth.register({ email, password, fullName, role });
+      if (res.success && res.data) {
+        const data = res.data as { user?: User; accessToken?: string; token?: string };
+        const token = data.accessToken ?? data.token;
+        if (token) {
+          localStorage.setItem(STORAGE_KEY, token);
+          setToken(token);
+          setUserState(data.user ?? null);
+          return { ok: true };
+        }
+      }
+      const message = !res.success && 'message' in res ? res.message : 'Registration failed. Please try again.';
+      return { ok: false, message };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Network error. Please try again.';
+      return { ok: false, message };
     }
-    const message = !res.success && 'message' in res ? res.message : 'Registration failed. Please try again.';
-    return { ok: false, message };
   }, []);
 
   const logout = useCallback(async () => {
     try {
       await api.auth.logout();
     } catch {
-      // ignore
+      // ignore – still clear local state
     }
     localStorage.removeItem(STORAGE_KEY);
     setToken(null);
-    setUserState(DEMO_USER);
+    setUserState(null);
   }, []);
 
   return (

@@ -13,7 +13,7 @@ import { SlidePanel } from '@/components/ui/SlidePanel'
 
 export function LeavePage(): React.ReactElement {
   const { user } = useAuth()
-  const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager'
+  const isAdminOrManager = user?.role === 'Admin' || user?.role === 'Manager'
   const [myLeaves, setMyLeaves] = useState<LeaveRequest[]>([])
   const [allLeaves, setAllLeaves] = useState<LeaveRequest[]>([])
   const [loading, setLoading] = useState(true)

@@ -39,12 +39,15 @@ export async function apiRequest<T>(
 
 // Auth (BizxFlow: under /api/v1/users/)
 export const auth = {
-  register: (body: import('../types/api').RegisterBody) =>
-    apiRequest<import('../types/api').AuthData>('/api/v1/users/register', {
+  register: (body: import('../types/api').RegisterBody) => {
+    const { fullName, ...rest } = body;
+    const payload = { ...rest, fullName, name: fullName };
+    return apiRequest<import('../types/api').AuthData>('/api/v1/users/register', {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
       token: null,
-    }),
+    });
+  },
   login: (body: import('../types/api').LoginBody) =>
     apiRequest<import('../types/api').AuthData>('/api/v1/users/login', {
       method: 'POST',

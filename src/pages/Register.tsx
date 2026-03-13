@@ -9,16 +9,16 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 
 const ROLES: { value: Role; label: string }[] = [
-  { value: 'employee', label: 'Employee' },
-  { value: 'manager', label: 'Manager' },
-  { value: 'admin', label: 'Admin' },
+  { value: 'Employee', label: 'Employee' },
+  { value: 'Manager', label: 'Manager' },
+  { value: 'Admin', label: 'Admin' },
 ]
 
 export function RegisterPage(): React.ReactElement {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
-  const [role, setRole] = useState<Role>('employee')
+  const [role, setRole] = useState<Role>('Employee')
   const [submitting, setSubmitting] = useState(false)
   const { register } = useAuth()
   const { addToast } = useToast()
@@ -40,22 +40,22 @@ export function RegisterPage(): React.ReactElement {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--app-bg)] px-4 py-12">
+    <div className="flex min-h-screen min-h-[100dvh] items-center justify-center overflow-auto bg-[var(--app-bg)] px-4 py-8 sm:px-6 sm:py-10 md:py-12">
       <button
         type="button"
         onClick={toggleTheme}
-        className="landing-theme-btn fixed right-4 top-4 flex h-9 w-9 items-center justify-center rounded-lg text-[var(--app-muted)] transition-colors hover:bg-[var(--app-card)] hover:text-[var(--app-text)]"
+        className="landing-theme-btn fixed right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-lg text-[var(--app-muted)] transition-colors hover:bg-[var(--app-card)] hover:text-[var(--app-text)] sm:right-4 sm:top-4 sm:h-9 sm:w-9"
         aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
       >
         {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
       </button>
-      <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-card)] p-8 shadow-sm">
-          <h1 className="text-center font-display text-2xl font-bold tracking-tight text-[var(--app-text)]">
+      <div className="w-full max-w-md flex-1 py-4 sm:py-0">
+        <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] p-5 shadow-sm sm:rounded-2xl sm:p-6 md:p-8">
+          <h1 className="text-center font-display text-xl font-bold tracking-tight text-[var(--app-text)] sm:text-2xl">
             Create account
           </h1>
-          <p className="mt-2 text-center font-body text-sm text-[var(--app-muted)]">BizxFlow</p>
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+          <p className="mt-1.5 text-center font-body text-sm text-[var(--app-muted)] sm:mt-2">BizxFlow</p>
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4 sm:mt-8 sm:space-y-5">
             <Input
               label="Email"
               id="reg-email"
@@ -93,7 +93,7 @@ export function RegisterPage(): React.ReactElement {
                 id="reg-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
-                className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] px-3 py-2.5 font-body text-sm text-[var(--app-text)] outline-none transition focus:border-[var(--app-text)]"
+                className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] px-3 py-3 font-body text-base text-[var(--app-text)] outline-none transition focus:border-[var(--app-text)] sm:py-2.5 sm:text-sm [min-height:2.75rem]"
               >
                 {ROLES.map((r) => (
                   <option key={r.value} value={r.value}>
@@ -102,13 +102,13 @@ export function RegisterPage(): React.ReactElement {
                 ))}
               </select>
             </div>
-            <Button type="submit" variant="primary" className="w-full" loading={submitting} disabled={submitting}>
+            <Button type="submit" variant="primary" className="w-full py-2.5 sm:py-2" loading={submitting} disabled={submitting}>
               {submitting ? 'Creating account…' : 'Register'}
             </Button>
           </form>
-          <p className="mt-6 text-center font-body text-sm text-[var(--app-muted)]">
+          <p className="mt-5 text-center font-body text-sm text-[var(--app-muted)] sm:mt-6">
             Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-[var(--app-text)] underline hover:no-underline">
+            <Link to="/login" className="inline-block font-semibold text-[var(--app-text)] underline hover:no-underline [padding:0.25em_0]">
               Sign in
             </Link>
           </p>

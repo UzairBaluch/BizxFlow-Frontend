@@ -10,7 +10,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 
 export function AttendancePage(): React.ReactElement {
   const { user } = useAuth()
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = user?.role === 'Admin'
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [checking, setChecking] = useState(false)
