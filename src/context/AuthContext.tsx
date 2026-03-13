@@ -18,9 +18,11 @@ type AuthState = {
   token: string | null;
 };
 
+export type AuthResult = { ok: true } | { ok: false; message: string };
+
 const AuthContext = createContext<AuthState & {
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, fullName: string, role?: import('../types/api').Role) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<AuthResult>;
+  register: (email: string, password: string, fullName: string, role?: import('../types/api').Role) => Promise<AuthResult>;
   logout: () => void;
   setUser: (u: User | null) => void;
 } | null>(null);
@@ -57,26 +59,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchUser();
   }, [fetchUser]);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
     const res = await api.auth.login({ email, password });
     if (res.success && res.data?.accessToken) {
       localStorage.setItem(STORAGE_KEY, res.data.accessToken);
       setToken(res.data.accessToken);
       setUserState(res.data.user ?? null);
-      return true;
+      return { ok: true };
     }
-    return false;
+    const message = !res.success && 'message' in res ? res.message : 'Invalid email or password';
+    return { ok: false, message };
   }, []);
 
-  const register = useCallback(async (email: string, password: string, fullName: string, role?: import('../types/api').Role) => {
+  const register = useCallback(async (email: string, password: string, fullName: string, role?: import('../types/api').Role): Promise<AuthResult> => {
     const res = await api.auth.register({ email, password, fullName, role });
     if (res.success && res.data?.accessToken) {
       localStorage.setItem(STORAGE_KEY, res.data.accessToken);
       setToken(res.data.accessToken);
       setUserState(res.data.user ?? null);
-      return true;
+      return { ok: true };
     }
-    return false;
+    const message = !res.success && 'message' in res ? res.message : 'Registration failed. Please try again.';
+    return { ok: false, message };
   }, []);
 
   const logout = useCallback(async () => {

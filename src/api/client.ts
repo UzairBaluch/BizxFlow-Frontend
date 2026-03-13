@@ -21,12 +21,17 @@ export async function apiRequest<T>(
   if (token) {
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
-  const res = await fetch(url, { ...init, headers, credentials: 'include' });
+  // Use 'omit' so CORS works with backend that sends Access-Control-Allow-Origin: *
+  // (with credentials: 'include', the server cannot use * and must send the exact origin)
+  const res = await fetch(url, { ...init, headers, credentials: 'omit' });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
+    const message =
+      json.message ||
+      (res.status >= 500 ? 'Server error. Please try again later.' : res.statusText || 'Request failed');
     return {
       success: false,
-      message: json.message || res.statusText || 'Request failed',
+      message: typeof message === 'string' ? message : 'Request failed',
     };
   }
   return json as ApiResponse<T>;

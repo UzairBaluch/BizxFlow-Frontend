@@ -9,11 +9,11 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'default', loading = false, children, disabled, ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'default', loading = false, children, disabled, type = 'button', ...props }, ref) => {
     return (
       <motion.button
         ref={ref}
-        type="button"
+        type={type}
         className={cn(
           'inline-flex items-center justify-center rounded-[7px] font-body text-[13px] font-medium outline-none transition duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50',
           variant === 'primary' &&

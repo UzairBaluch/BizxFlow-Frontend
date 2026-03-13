@@ -71,13 +71,13 @@ export function DashboardPage(): React.ReactElement {
       <section className="grid gap-4 lg:grid-cols-2">
         <Card className="p-5">
           <CardTitle className="mb-4">Task status</CardTitle>
-          <div className="h-[240px]">
+          <div className="min-h-[240px] w-full min-w-0" style={{ height: 240 }}>
             {taskChartData.length === 0 ? (
               <div className="flex h-full items-center justify-center font-body text-sm text-[var(--app-muted)]">
                 No data
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minHeight={240}>
                 <PieChart>
                   <Pie
                     data={taskChartData}
@@ -109,13 +109,13 @@ export function DashboardPage(): React.ReactElement {
 
         <Card className="p-5">
           <CardTitle className="mb-4">Leave status</CardTitle>
-          <div className="h-[240px]">
+          <div className="min-h-[240px] w-full min-w-0" style={{ height: 240 }}>
             {leaveChartData.length === 0 ? (
               <div className="flex h-full items-center justify-center font-body text-sm text-[var(--app-muted)]">
                 No data
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minHeight={240}>
                 <BarChart data={leaveChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
                   <XAxis
                     dataKey="name"

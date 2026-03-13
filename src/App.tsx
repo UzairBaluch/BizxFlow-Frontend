@@ -16,7 +16,8 @@ import { AnalyticsPage } from '@/pages/Analytics'
 import { AnnouncementsPage } from '@/pages/Announcements'
 import { MoodCheckInPage } from '@/pages/MoodCheckIn'
 import { EndOfDayReportPage } from '@/pages/EndOfDayReport'
-import { AuthPlaceholderPage } from '@/pages/AuthPlaceholder'
+import { LoginPage } from '@/pages/Login'
+import { RegisterPage } from '@/pages/Register'
 
 export default function App(): React.ReactElement {
   return (
@@ -143,8 +144,8 @@ export default function App(): React.ReactElement {
             </AppLayout>
           }
         />
-        <Route path="/login" element={<AuthPlaceholderPage type="login" />} />
-        <Route path="/register" element={<AuthPlaceholderPage type="register" />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/settings" element={<Navigate to="/profile" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
