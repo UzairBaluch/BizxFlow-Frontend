@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = raw.data ?? raw;
       let token = data.accessToken ?? data.token ?? raw.accessToken ?? raw.token;
       let user = data.user ?? raw.user;
-      if (!token && user) {
+      if (!token) {
         const loginRes = await api.auth.login({ email, password });
         if (loginRes.success && loginRes.data) {
           const loginData = loginRes.data as { user?: User; accessToken?: string; token?: string };
