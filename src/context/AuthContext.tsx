@@ -66,20 +66,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(async (email: string, password: string, fullName: string, role?: import('../types/api').Role): Promise<AuthResult> => {
     try {
       const res = await api.auth.register({ email, password, fullName, role });
-      if (!res.success) {
+      if (res.success === false) {
         const message = 'message' in res ? res.message : 'Registration failed. Please try again.';
         return { ok: false, message };
       }
-      const raw = res as { data?: { user?: User; accessToken?: string; token?: string }; user?: User; accessToken?: string; token?: string };
-      const data = raw.data ?? raw;
-      let token = data.accessToken ?? data.token ?? raw.accessToken ?? raw.token;
-      let user = data.user ?? raw.user;
+      const raw = res as Record<string, unknown>;
+      const data = (raw.data ?? raw) as Record<string, unknown>;
+      let token =
+        (data.accessToken as string | undefined) ??
+        (data.token as string | undefined) ??
+        (raw.accessToken as string | undefined) ??
+        (raw.token as string | undefined);
+      let user = (data.user ?? raw.user) as User | undefined;
       if (!token) {
         const loginRes = await api.auth.login({ email, password });
-        if (loginRes.success && loginRes.data) {
-          const loginData = loginRes.data as { user?: User; accessToken?: string; token?: string };
-          token = loginData.accessToken ?? loginData.token;
-          user = user ?? loginData.user;
+        const loginRaw = loginRes as Record<string, unknown>;
+        const loginData = (loginRaw.data ?? loginRaw) as Record<string, unknown>;
+        const loginToken = (loginData.accessToken ?? loginData.token ?? loginRaw.accessToken ?? loginRaw.token) as string | undefined;
+        if (loginToken) {
+          token = loginToken;
+          user = (user ?? loginData.user ?? loginRaw.user) as User | undefined;
         }
       }
       if (token) {

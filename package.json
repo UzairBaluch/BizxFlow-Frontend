@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "start": "npm run dev",
+    "test:local": "npm install && npm run dev",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
