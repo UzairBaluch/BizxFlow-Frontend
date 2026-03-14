@@ -39,7 +39,7 @@ export function ProfilePage(): React.ReactElement {
     const res = await companyApi.update({ companyName: companyName.trim() })
     setProfileSaving(false)
     const r = res as { data?: import('@/types/api').Company; _id?: string; message?: string }
-    const updated = r.data ?? (r._id ? (res as import('@/types/api').Company) : null)
+    const updated = r.data ?? (r._id ? (res as unknown as import('@/types/api').Company) : null)
     if (updated) {
       setCompany(updated)
       addToast('Company updated.')
@@ -70,7 +70,7 @@ export function ProfilePage(): React.ReactElement {
     const res = await companyApi.update({}, file)
     setUploading(false)
     const r = res as { data?: import('@/types/api').Company; _id?: string; message?: string }
-    const updated = r.data ?? (r._id ? (res as import('@/types/api').Company) : null)
+    const updated = r.data ?? (r._id ? (res as unknown as import('@/types/api').Company) : null)
     if (updated) {
       setCompany(updated)
       addToast('Logo updated.')

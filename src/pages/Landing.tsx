@@ -185,7 +185,6 @@ const HERO_PHRASES = ['workforce management', 'team productivity', 'smart workpl
 
 const TYPING_MS = 80
 const PAUSE_AFTER_TYPING_MS = 1800
-const PAUSE_AFTER_DELETE_MS = 400
 
 const container = {
   hidden: { opacity: 0 },
