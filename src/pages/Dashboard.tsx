@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Users, CheckSquare, Calendar, Clock } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Users, CheckSquare, Calendar, Clock, Settings } from 'lucide-react'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { motion } from 'framer-motion'
 import { dashboard as dashboardApi } from '@/api/client'
+import { useAuth } from '@/context/AuthContext'
 import type { DashboardData } from '@/types/api'
 import type { RecentActivity } from '@/types/dashboard.types'
 import { StatCard } from '@/components/ui/StatCard'
@@ -11,11 +13,18 @@ import { Card, CardTitle } from '@/components/ui/Card'
 const CHART_COLORS = ['var(--app-text)', 'rgba(255,255,255,0.6)', 'rgba(255,255,255,0.3)']
 
 export function DashboardPage(): React.ReactElement {
+  const { accountType, company } = useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const isCompany = accountType === 'company'
+
   useEffect(() => {
+    if (isCompany) {
+      setLoading(false)
+      return
+    }
     dashboardApi
       .get()
       .then((res) => {
@@ -24,7 +33,36 @@ export function DashboardPage(): React.ReactElement {
       })
       .catch(() => setError('Failed to load'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [isCompany])
+
+  if (isCompany) {
+    return (
+      <div className="space-y-7">
+        <Card className="p-8">
+          <h2 className="font-display text-xl font-bold text-[var(--app-text)]">Welcome, {company?.companyName ?? 'Company'}</h2>
+          <p className="mt-2 font-body text-sm text-[var(--app-muted)]">
+            Manage your company settings and users from here.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-4">
+            <Link
+              to="/profile"
+              className="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] px-4 py-3 font-body text-sm font-medium text-[var(--app-text)] transition hover:bg-[var(--app-border)]/50"
+            >
+              <Settings className="h-5 w-5" />
+              Company settings
+            </Link>
+            <Link
+              to="/users"
+              className="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] px-4 py-3 font-body text-sm font-medium text-[var(--app-text)] transition hover:bg-[var(--app-border)]/50"
+            >
+              <Users className="h-5 w-5" />
+              Users
+            </Link>
+          </div>
+        </Card>
+      </div>
+    )
+  }
 
   if (loading) {
     return (

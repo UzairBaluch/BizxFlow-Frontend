@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -181,6 +181,12 @@ const PRICING_PLANS = [
 ]
 
 
+const HERO_PHRASES = ['workforce management', 'team productivity', 'smart workplace', 'AI-powered teams']
+
+const TYPING_MS = 80
+const PAUSE_AFTER_TYPING_MS = 1800
+const PAUSE_AFTER_DELETE_MS = 400
+
 const container = {
   hidden: { opacity: 0 },
   show: {
@@ -198,16 +204,34 @@ export function LandingPage(): React.ReactElement {
   const theme = useThemeStore((s) => s.theme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [typedPhrase, setTypedPhrase] = useState('')
+  const [phraseIndex, setPhraseIndex] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    const target = HERO_PHRASES[phraseIndex]
+    const delay = isDeleting ? TYPING_MS / 2 : (typedPhrase === target ? PAUSE_AFTER_TYPING_MS : TYPING_MS)
+    const t = setTimeout(() => {
+      if (isDeleting) {
+        if (typedPhrase.length === 0) {
+          setIsDeleting(false)
+          setPhraseIndex((i) => (i + 1) % HERO_PHRASES.length)
+        } else {
+          setTypedPhrase(target.slice(0, typedPhrase.length - 1))
+        }
+      } else {
+        if (typedPhrase === target) {
+          setIsDeleting(true)
+        } else {
+          setTypedPhrase(target.slice(0, typedPhrase.length + 1))
+        }
+      }
+    }, delay)
+    return () => clearTimeout(t)
+  }, [typedPhrase, phraseIndex, isDeleting])
 
   const navLinks = (
     <>
-      <Link
-        to="/dashboard"
-        className="landing-nav-link block rounded-lg px-3 py-2 font-body text-sm font-medium text-[var(--app-muted)] transition hover:text-[var(--app-text)] md:inline-block"
-        onClick={() => setMobileMenuOpen(false)}
-      >
-        Dashboard
-      </Link>
       <a
         href={API_DOCS}
         target="_blank"
@@ -294,9 +318,15 @@ export function LandingPage(): React.ReactElement {
 
       {/* Hero */}
       <section className="relative overflow-hidden px-4 pt-16 pb-20 sm:px-6 sm:pt-20 sm:pb-28 md:pt-28 md:pb-36">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,var(--app-border),transparent)] opacity-50" />
-        <div className="absolute top-1/4 left-1/4 h-64 w-64 rounded-full bg-[var(--app-border)] opacity-20 blur-3xl sm:h-96 sm:w-96" />
-        <div className="absolute bottom-1/4 right-1/4 h-52 w-52 rounded-full bg-[var(--app-border)] opacity-15 blur-3xl sm:h-80 sm:w-80" />
+        <div className="absolute inset-0 overflow-hidden">
+          <div
+            className="absolute left-1/2 top-1/2 h-[200vmax] w-[200vmax] -translate-x-1/2 -translate-y-1/2 rotate-45 opacity-60"
+            style={{
+              backgroundImage: 'linear-gradient(to right, var(--app-border) 1px, transparent 1px), linear-gradient(to bottom, var(--app-border) 1px, transparent 1px)',
+              backgroundSize: '48px 48px',
+            }}
+          />
+        </div>
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -304,7 +334,12 @@ export function LandingPage(): React.ReactElement {
           className="relative mx-auto max-w-3xl text-center"
         >
           <h1 className="font-display text-3xl font-bold leading-[1.15] tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-            The complete workforce management app
+            The complete{' '}
+            <span className="inline-block min-w-[0.5em] border-b-2 border-[var(--app-text)] border-opacity-80">
+              {typedPhrase}
+              <span className="animate-pulse" style={{ animationDuration: '1s' }}>|</span>
+            </span>
+            {' '}app
           </h1>
           <p className="mt-4 max-w-2xl mx-auto font-body text-base text-[var(--app-muted)] sm:mt-6 sm:text-lg md:text-xl">
             One platform for projects, meetings, and real-time chat—with smart attendance, leave approvals, AI briefings, and performance insights. Everything your team needs, in one place.
@@ -697,9 +732,6 @@ export function LandingPage(): React.ReactElement {
                 Product
               </h4>
               <ul className="mt-4 space-y-2 font-body text-sm text-[var(--app-muted)]">
-                <li>
-                  <Link to="/dashboard" className="transition hover:text-[var(--app-text)]">Dashboard</Link>
-                </li>
                 <li>
                   <a href={API_DOCS} target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--app-text)]">
                     API Docs

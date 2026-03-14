@@ -61,11 +61,12 @@ function roleFromString(r: string): Role {
 export function Sidebar(): React.ReactElement {
   const collapsed = useSidebarStore((s) => s.collapsed)
   const toggle = useSidebarStore((s) => s.toggle)
-  const { user, logout } = useAuth()
+  const { user, company, accountType, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const isCompany = accountType === 'company'
   const role = user?.role ? roleFromString(user.role) : Role.Employee
-  const canSeeManagement = role === Role.Admin || role === Role.Manager
+  const canSeeManagement = !isCompany && (role === Role.Admin || role === Role.Manager)
 
   function handleLogout(): void {
     logout()
@@ -116,6 +117,28 @@ export function Sidebar(): React.ReactElement {
       </div>
 
       <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-5">
+        {isCompany ? (
+          <>
+            <div className="space-y-0.5">
+              <p className={cn('mb-2.5 px-3 font-body text-[10px] font-semibold uppercase tracking-widest text-[var(--app-muted)]', collapsed && 'sr-only')}>
+                Company
+              </p>
+              <Link to="/profile" className={navLinkClass(location.pathname === '/profile')}>
+                <Settings className="h-5 w-5 shrink-0" />
+                <motion.span initial={false} animate={{ opacity: collapsed ? 0 : 1 }} transition={{ duration: 0.1 }} className="overflow-hidden whitespace-nowrap">
+                  Company settings
+                </motion.span>
+              </Link>
+              <Link to="/users" className={navLinkClass(location.pathname === '/users')}>
+                <Users className="h-5 w-5 shrink-0" />
+                <motion.span initial={false} animate={{ opacity: collapsed ? 0 : 1 }} transition={{ duration: 0.1 }} className="overflow-hidden whitespace-nowrap">
+                  Users
+                </motion.span>
+              </Link>
+            </div>
+          </>
+        ) : (
+          <>
         <div className="space-y-0.5">
           <p className={cn('mb-2.5 px-3 font-body text-[10px] font-semibold uppercase tracking-widest text-[var(--app-muted)]', collapsed && 'sr-only')}>
             Main
@@ -189,9 +212,11 @@ export function Sidebar(): React.ReactElement {
             )
           })}
         </div>
+          </>
+        )}
       </nav>
 
-      {/* User & actions — constrain width so "Demo User" doesn't overflow */}
+      {/* Account block: company or user */}
       <div className={cn('shrink-0 overflow-hidden border-t border-[var(--app-border)] bg-[var(--app-bg)]/50 p-3', collapsed && 'flex flex-col items-center')}>
         <div
           className={cn(
@@ -200,11 +225,13 @@ export function Sidebar(): React.ReactElement {
           )}
         >
           <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-[var(--app-border)] bg-[var(--app-border)] ring-2 ring-[var(--app-card)]">
-            {user?.profilePicture ? (
+            {company?.logo ? (
+              <img src={company.logo} alt="" className="h-full w-full object-cover" />
+            ) : user?.profilePicture ? (
               <img src={user.profilePicture} alt="" className="h-full w-full object-cover" />
             ) : (
               <span className="flex h-full w-full items-center justify-center font-body text-sm font-semibold text-[var(--app-muted)]">
-                {(user?.fullName ?? '?').charAt(0)}
+                {(company?.companyName ?? user?.fullName ?? '?').charAt(0)}
               </span>
             )}
           </div>
@@ -214,8 +241,12 @@ export function Sidebar(): React.ReactElement {
             transition={{ duration: 0.1 }}
             className="min-w-0 flex-1 overflow-hidden"
           >
-            <p className="truncate font-body text-sm font-semibold text-[var(--app-text)]">{user?.fullName ?? 'User'}</p>
-            <p className={cn('truncate font-body text-[10px] font-medium uppercase tracking-wider text-[var(--app-muted)]', collapsed && 'sr-only')}>{user?.role ?? ''}</p>
+            <p className="truncate font-body text-sm font-semibold text-[var(--app-text)]">
+              {company?.companyName ?? user?.fullName ?? 'Account'}
+            </p>
+            <p className={cn('truncate font-body text-[10px] font-medium uppercase tracking-wider text-[var(--app-muted)]', collapsed && 'sr-only')}>
+              {isCompany ? 'Company' : (user?.role ?? '')}
+            </p>
           </motion.div>
         </div>
         <div className={cn('mt-2 flex gap-1', collapsed && 'flex-col')}>

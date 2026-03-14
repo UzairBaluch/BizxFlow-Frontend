@@ -1,5 +1,15 @@
 export type Role = 'Admin' | 'Manager' | 'Employee';
 
+export type AccountType = 'company' | 'user';
+
+export type Company = {
+  _id: string;
+  email: string;
+  companyName: string;
+  logo?: string;
+  createdAt?: string;
+};
+
 export type User = {
   _id: string;
   email: string;
@@ -22,13 +32,21 @@ export type ApiError = {
 
 export type ApiResponse<T> = ApiSuccess<T> | ApiError;
 
-// Auth
-export type RegisterBody = { email: string; password: string; fullName: string; role?: Role };
+// Auth (company-based)
+export type RegisterBody = { email: string; password: string; companyName: string };
 export type LoginBody = { email: string; password: string };
-export type AuthData = { user: User; accessToken: string };
+export type AuthData = {
+  type: AccountType;
+  company?: Company;
+  user?: User;
+  accessToken: string;
+  refreshToken?: string;
+};
+export type MeData = { type: AccountType; company?: Company; user?: User };
 
 // Profile
-export type UpdateProfileBody = { fullName?: string; profilePicture?: string };
+export type UpdateProfileBody = { fullName?: string };
+export type UpdateCompanyBody = { companyName?: string };
 export type ChangePasswordBody = { currentPassword: string; newPassword: string };
 
 // Attendance

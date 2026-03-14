@@ -42,14 +42,24 @@ export async function apiRequest<T>(
   return json as ApiResponse<T>;
 }
 
-// Auth (BizxFlow: under /api/v1/users/)
+// Auth (BizxFlow: company-based, under /api/v1/users/)
 export const auth = {
-  register: (body: import('../types/api').RegisterBody) => {
-    const { fullName, ...rest } = body;
-    const payload = { ...rest, fullName, name: fullName };
-    return apiRequest<import('../types/api').AuthData>('/api/v1/users/register', {
+  register: (body: import('../types/api').RegisterBody, logo?: File) => {
+    if (logo) {
+      const form = new FormData();
+      form.append('email', body.email);
+      form.append('password', body.password);
+      form.append('companyName', body.companyName);
+      form.append('logo', logo);
+      return apiRequest<import('../types/api').Company>('/api/v1/users/register', {
+        method: 'POST',
+        body: form,
+        token: null,
+      });
+    }
+    return apiRequest<import('../types/api').Company>('/api/v1/users/register', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
       token: null,
     });
   },
@@ -62,16 +72,26 @@ export const auth = {
   logout: () =>
     apiRequest<unknown>('/api/v1/users/logout', { method: 'POST', body: '{}' }),
   me: () =>
-    apiRequest<{ user: import('../types/api').User }>('/api/v1/users/me'),
+    apiRequest<import('../types/api').MeData>('/api/v1/users/me'),
 };
 
 // Users
 export const users = {
-  updateProfile: (body: import('../types/api').UpdateProfileBody) =>
-    apiRequest<{ user: import('../types/api').User }>('/api/v1/users/update-profile', {
+  updateProfile: (body: import('../types/api').UpdateProfileBody, picture?: File) => {
+    if (picture) {
+      const form = new FormData();
+      if (body.fullName != null) form.append('fullName', body.fullName);
+      form.append('picture', picture);
+      return apiRequest<{ user: import('../types/api').User }>('/api/v1/users/update-profile', {
+        method: 'PATCH',
+        body: form,
+      });
+    }
+    return apiRequest<{ user: import('../types/api').User }>('/api/v1/users/update-profile', {
       method: 'PATCH',
       body: JSON.stringify(body),
-    }),
+    });
+  },
   changePassword: (body: import('../types/api').ChangePasswordBody) =>
     apiRequest<unknown>('/api/v1/users/change-password', {
       method: 'PATCH',
@@ -89,11 +109,30 @@ export const users = {
   },
   uploadProfilePicture: (file: File) => {
     const form = new FormData();
-    form.append('profilePicture', file);
-    return apiRequest<{ user?: import('../types/api').User; profilePicture?: string }>(
-      '/api/v1/users/upload-profile-picture',
-      { method: 'POST', body: form }
-    );
+    form.append('picture', file);
+    return apiRequest<{ user?: import('../types/api').User }>('/api/v1/users/update-profile', {
+      method: 'PATCH',
+      body: form,
+    });
+  },
+};
+
+// Company (company account only)
+export const company = {
+  update: (body: import('../types/api').UpdateCompanyBody, logo?: File) => {
+    if (logo) {
+      const form = new FormData();
+      if (body.companyName != null) form.append('companyName', body.companyName);
+      form.append('logo', logo);
+      return apiRequest<import('../types/api').Company>('/api/v1/users/company', {
+        method: 'PATCH',
+        body: form,
+      });
+    }
+    return apiRequest<import('../types/api').Company>('/api/v1/users/company', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
   },
 };
 

@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }): React.ReactElement {
-  const { user, loading } = useAuth()
+  const { user, company, loading } = useAuth()
 
   if (loading) {
     return (
@@ -12,7 +12,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }): Rea
     )
   }
 
-  if (!user) {
+  if (!user && !company) {
     return <Navigate to="/" replace />
   }
 

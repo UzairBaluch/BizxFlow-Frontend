@@ -12,7 +12,8 @@ export function TopBar({ title }: TopBarProps): React.ReactElement {
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
   const collapsed = useSidebarStore((s) => s.collapsed)
   const toggleSidebar = useSidebarStore((s) => s.toggle)
-  const { user } = useAuth()
+  const { user, company } = useAuth()
+  const displayName = company?.companyName ?? user?.fullName ?? '?'
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-[var(--app-border)] bg-[var(--app-bg)] px-7">
@@ -37,11 +38,13 @@ export function TopBar({ title }: TopBarProps): React.ReactElement {
           {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </button>
         <div className="h-8 w-8 overflow-hidden rounded-full border border-[var(--app-border)] bg-[var(--app-card)]">
-          {user?.profilePicture ? (
+          {company?.logo ? (
+            <img src={company.logo} alt="" className="h-full w-full object-cover" />
+          ) : user?.profilePicture ? (
             <img src={user.profilePicture} alt="" className="h-full w-full object-cover" />
           ) : (
             <span className="flex h-full w-full items-center justify-center font-body text-xs font-medium text-[var(--app-muted)]">
-              {(user?.fullName ?? '?').charAt(0)}
+              {displayName.charAt(0)}
             </span>
           )}
         </div>
