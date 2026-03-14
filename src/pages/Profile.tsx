@@ -99,19 +99,19 @@ export function ProfilePage(): React.ReactElement {
 
   if (isCompany && company) {
     return (
-      <div className="grid gap-7 lg:grid-cols-2">
-        <Card className="p-5">
-          <CardTitle className="mb-4">Company logo</CardTitle>
-          <div className="flex flex-wrap items-start gap-6">
+      <div className="grid gap-5 sm:gap-6 lg:grid-cols-2 lg:gap-7">
+        <Card className="p-4 sm:p-5">
+          <CardTitle className="mb-3 sm:mb-4">Company logo</CardTitle>
+          <div className="flex flex-wrap items-start gap-4 sm:gap-6">
             <div className="relative">
               {company.logo ? (
                 <img
                   src={company.logo}
                   alt=""
-                  className="h-24 w-24 rounded-xl border-2 border-[var(--app-border)] object-cover"
+                  className="h-20 w-20 rounded-xl border-2 border-[var(--app-border)] object-cover sm:h-24 sm:w-24"
                 />
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-xl border-2 border-[var(--app-border)] bg-[var(--app-border)] font-display text-2xl font-bold text-[var(--app-muted)]">
+                <div className="flex h-20 w-20 items-center justify-center rounded-xl border-2 border-[var(--app-border)] bg-[var(--app-border)] font-display text-xl font-bold text-[var(--app-muted)] sm:h-24 sm:w-24 sm:text-2xl">
                   {(company.companyName ?? '?').charAt(0)}
                 </div>
               )}
@@ -127,18 +127,18 @@ export function ProfilePage(): React.ReactElement {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--app-card)] bg-[var(--app-text)] text-[var(--app-bg)] hover:opacity-90 disabled:opacity-50"
+                className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full border-2 border-[var(--app-card)] bg-[var(--app-text)] text-[var(--app-bg)] hover:opacity-90 disabled:opacity-50"
                 title="Change logo"
               >
                 {uploading ? '…' : '↑'}
               </button>
             </div>
-            <p className="font-body text-sm text-[var(--app-muted)]">{company.companyName} · Company</p>
+            <p className="font-body text-xs text-[var(--app-muted)] sm:text-sm">{company.companyName} · Company</p>
           </div>
         </Card>
 
-        <Card className="p-5">
-          <CardTitle className="mb-4">Update company</CardTitle>
+        <Card className="p-4 sm:p-5">
+          <CardTitle className="mb-3 sm:mb-4">Update company</CardTitle>
           <form onSubmit={handleSaveCompanyProfile} className="space-y-4">
             <Input
               label="Company name"
@@ -151,8 +151,8 @@ export function ProfilePage(): React.ReactElement {
           </form>
         </Card>
 
-        <Card className="p-5 lg:col-span-2">
-          <CardTitle className="mb-4">Change password</CardTitle>
+        <Card className="p-4 sm:p-5 lg:col-span-2">
+          <CardTitle className="mb-3 sm:mb-4">Change password</CardTitle>
           <form onSubmit={handleChangePassword} className="max-w-md space-y-4">
             <Input
               label="Current password"
@@ -180,19 +180,19 @@ export function ProfilePage(): React.ReactElement {
   if (!user) return null as unknown as React.ReactElement
 
   return (
-    <div className="grid gap-7 lg:grid-cols-2">
-      <Card className="p-5">
-        <CardTitle className="mb-4">Profile picture</CardTitle>
-        <div className="flex flex-wrap items-start gap-6">
+    <div className="grid gap-5 sm:gap-6 lg:grid-cols-2 lg:gap-7">
+      <Card className="p-4 sm:p-5">
+        <CardTitle className="mb-3 sm:mb-4">Profile picture</CardTitle>
+        <div className="flex flex-wrap items-start gap-4 sm:gap-6">
           <div className="relative">
             {user.profilePicture ? (
               <img
                 src={user.profilePicture}
                 alt=""
-                className="h-24 w-24 rounded-full border-2 border-[var(--app-border)] object-cover"
+                className="h-20 w-20 rounded-full border-2 border-[var(--app-border)] object-cover sm:h-24 sm:w-24"
               />
             ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-[var(--app-border)] bg-[var(--app-border)] font-display text-2xl font-bold text-[var(--app-muted)]">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[var(--app-border)] bg-[var(--app-border)] font-display text-xl font-bold text-[var(--app-muted)] sm:h-24 sm:w-24 sm:text-2xl">
                 {(user.fullName ?? '?').charAt(0)}
               </div>
             )}
@@ -208,20 +208,20 @@ export function ProfilePage(): React.ReactElement {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--app-card)] bg-[var(--app-text)] text-[var(--app-bg)] hover:opacity-90 disabled:opacity-50"
+              className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full border-2 border-[var(--app-card)] bg-[var(--app-text)] text-[var(--app-bg)] hover:opacity-90 disabled:opacity-50"
               title="Change photo"
             >
               {uploading ? '…' : '↑'}
             </button>
           </div>
-          <p className="font-body text-sm text-[var(--app-muted)]">
+          <p className="font-body text-xs text-[var(--app-muted)] sm:text-sm">
             {user.fullName} · {user.role}
           </p>
         </div>
       </Card>
 
-      <Card className="p-5">
-        <CardTitle className="mb-4">Update profile</CardTitle>
+      <Card className="p-4 sm:p-5">
+        <CardTitle className="mb-3 sm:mb-4">Update profile</CardTitle>
         <form onSubmit={handleSaveUserProfile} className="space-y-4">
           <Input
             label="Full name"
@@ -234,8 +234,8 @@ export function ProfilePage(): React.ReactElement {
         </form>
       </Card>
 
-      <Card className="p-5 lg:col-span-2">
-        <CardTitle className="mb-4">Change password</CardTitle>
+      <Card className="p-4 sm:p-5 lg:col-span-2">
+        <CardTitle className="mb-3 sm:mb-4">Change password</CardTitle>
         <form onSubmit={handleChangePassword} className="max-w-md space-y-4">
           <Input
             label="Current password"

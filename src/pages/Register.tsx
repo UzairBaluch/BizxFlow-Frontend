@@ -32,14 +32,14 @@ export function RegisterPage(): React.ReactElement {
 
   return (
     <AuthOverLanding>
-      <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] p-5 shadow-lg sm:rounded-2xl sm:p-6 md:p-8">
-        <h1 className="text-center font-display text-xl font-bold tracking-tight text-[var(--app-text)] sm:text-2xl">
+      <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] p-4 shadow-lg sm:rounded-2xl sm:p-6 md:p-8">
+        <h1 className="text-center font-display text-lg font-bold tracking-tight text-[var(--app-text)] sm:text-xl md:text-2xl">
           Create company account
         </h1>
-        <p className="mt-1.5 text-center font-body text-sm text-[var(--app-muted)] sm:mt-2">
+        <p className="mt-1.5 text-center font-body text-xs text-[var(--app-muted)] sm:mt-2 sm:text-sm">
           Sign up your company. You can add users later.
         </p>
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4 sm:mt-8 sm:space-y-5">
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4 sm:mt-8 sm:space-y-5">
           <Input
             label="Email"
             id="reg-email"
@@ -78,15 +78,15 @@ export function RegisterPage(): React.ReactElement {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] px-3 py-2.5 font-body text-sm text-[var(--app-text)] file:mr-2 file:rounded file:border-0 file:bg-[var(--app-text)] file:px-3 file:py-1 file:text-[var(--app-bg)] file:text-sm"
+              className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] px-3 py-3 font-body text-sm text-[var(--app-text)] file:mr-2 file:min-h-[44px] file:rounded file:border-0 file:bg-[var(--app-text)] file:px-4 file:py-2 file:text-[var(--app-bg)] file:text-sm sm:py-2.5"
               onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
             />
           </div>
-          <Button type="submit" variant="primary" className="w-full py-2.5 sm:py-2" loading={submitting} disabled={submitting}>
+          <Button type="submit" variant="primary" className="w-full min-h-[44px] py-3 text-base sm:min-h-0 sm:py-2 sm:text-sm" loading={submitting} disabled={submitting}>
             {submitting ? 'Creating company…' : 'Create company'}
           </Button>
         </form>
-        <p className="mt-5 text-center font-body text-sm text-[var(--app-muted)] sm:mt-6">
+        <p className="mt-4 text-center font-body text-xs text-[var(--app-muted)] sm:mt-6 sm:text-sm">
           Already have an account?{' '}
           <Link to="/login" className="inline-block font-semibold text-[var(--app-text)] underline hover:no-underline [padding:0.25em_0]">
             Sign in

@@ -236,21 +236,21 @@ export function LandingPage(): React.ReactElement {
         href={API_DOCS}
         target="_blank"
         rel="noopener noreferrer"
-        className="landing-nav-link block rounded-lg border border-[var(--app-border)] px-4 py-2 font-body text-sm font-medium transition hover:bg-[var(--app-card)] hover:text-[var(--app-text)] md:inline-block"
+        className="landing-nav-link flex min-h-[44px] items-center rounded-lg border border-[var(--app-border)] px-4 py-3 font-body text-sm font-medium transition hover:bg-[var(--app-card)] hover:text-[var(--app-text)] md:min-h-0 md:inline-block md:py-2"
         onClick={() => setMobileMenuOpen(false)}
       >
         API Docs
       </a>
       <Link
         to="/login"
-        className="landing-nav-link block rounded-lg px-4 py-2 font-body text-sm font-medium text-[var(--app-muted)] transition hover:text-[var(--app-text)] md:inline-block"
+        className="landing-nav-link flex min-h-[44px] items-center rounded-lg px-4 py-3 font-body text-sm font-medium text-[var(--app-muted)] transition hover:text-[var(--app-text)] md:min-h-0 md:inline-block md:py-2"
         onClick={() => setMobileMenuOpen(false)}
       >
         Sign in
       </Link>
       <Link
         to="/register"
-        className="landing-btn-primary block rounded-lg bg-[var(--app-text)] px-4 py-2 text-center font-body text-sm font-medium text-[var(--app-bg)] md:inline-block"
+        className="landing-btn-primary flex min-h-[44px] items-center justify-center rounded-lg bg-[var(--app-text)] px-4 py-3 text-center font-body text-sm font-medium text-[var(--app-bg)] md:min-h-0 md:inline-block md:py-2"
         onClick={() => setMobileMenuOpen(false)}
       >
         Get started
@@ -267,19 +267,19 @@ export function LandingPage(): React.ReactElement {
         transition={{ duration: 0.3 }}
         className="sticky top-0 z-50 border-b border-[var(--app-border)] bg-[var(--app-bg)]/90 backdrop-blur-md"
       >
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--app-text)] font-display text-sm font-bold text-[var(--app-bg)]">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-3 py-2.5 sm:px-6 sm:py-4">
+          <Link to="/" className="flex min-h-[44px] min-w-[44px] items-center gap-2 shrink-0 rounded-lg sm:min-h-0 sm:min-w-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--app-text)] font-display text-sm font-bold text-[var(--app-bg)] sm:h-8 sm:w-8">
               B
             </div>
-            <span className="font-display text-lg font-bold tracking-tight">BizxFlow</span>
+            <span className="font-display text-base font-bold tracking-tight sm:text-lg">BizxFlow</span>
           </Link>
           <div className="flex items-center gap-1 sm:gap-2">
             <motion.button
               type="button"
               onClick={toggleTheme}
               whileTap={{ scale: 0.9 }}
-              className="landing-theme-btn flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--app-muted)] transition-colors hover:bg-[var(--app-card)] hover:text-[var(--app-text)]"
+              className="landing-theme-btn flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[var(--app-muted)] transition-colors hover:bg-[var(--app-card)] hover:text-[var(--app-text)] sm:h-9 sm:w-9"
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -290,7 +290,7 @@ export function LandingPage(): React.ReactElement {
             <motion.button
               type="button"
               onClick={() => setMobileMenuOpen((o) => !o)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--app-text)] transition-colors hover:bg-[var(--app-card)] md:hidden"
+              className="flex h-10 w-10 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-[var(--app-text)] transition-colors hover:bg-[var(--app-card)] md:hidden"
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileMenuOpen}
             >
@@ -317,13 +317,13 @@ export function LandingPage(): React.ReactElement {
       </motion.nav>
 
       {/* Hero */}
-      <section className="relative overflow-hidden px-4 pt-16 pb-20 sm:px-6 sm:pt-20 sm:pb-28 md:pt-28 md:pb-36">
+      <section className="relative overflow-hidden px-3 pt-12 pb-16 sm:px-6 sm:pt-20 sm:pb-28 md:pt-28 md:pb-36">
         <div className="absolute inset-0 overflow-hidden">
           <div
-            className="absolute left-1/2 top-1/2 h-[200vmax] w-[200vmax] -translate-x-1/2 -translate-y-1/2 rotate-45 opacity-60"
+            className="absolute left-1/2 top-1/2 h-[200vmax] w-[200vmax] -translate-x-1/2 -translate-y-1/2 rotate-45 opacity-50 sm:opacity-60"
             style={{
               backgroundImage: 'linear-gradient(to right, var(--app-border) 1px, transparent 1px), linear-gradient(to bottom, var(--app-border) 1px, transparent 1px)',
-              backgroundSize: '48px 48px',
+              backgroundSize: 'clamp(32px, 8vw, 48px) clamp(32px, 8vw, 48px)',
             }}
           />
         </div>
@@ -333,7 +333,7 @@ export function LandingPage(): React.ReactElement {
           transition={{ duration: 0.5, ease: 'easeOut' }}
           className="relative mx-auto max-w-3xl text-center"
         >
-          <h1 className="font-display text-3xl font-bold leading-[1.15] tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
+          <h1 className="font-display text-2xl font-bold leading-[1.2] tracking-tight sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
             The complete{' '}
             <span className="inline-block min-w-[0.5em] border-b-2 border-[var(--app-text)] border-opacity-80">
               {typedPhrase}
@@ -341,14 +341,14 @@ export function LandingPage(): React.ReactElement {
             </span>
             {' '}app
           </h1>
-          <p className="mt-4 max-w-2xl mx-auto font-body text-base text-[var(--app-muted)] sm:mt-6 sm:text-lg md:text-xl">
+          <p className="mt-3 max-w-2xl mx-auto font-body text-sm text-[var(--app-muted)] sm:mt-6 sm:text-base md:text-lg lg:text-xl">
             One platform for projects, meetings, and real-time chat—with smart attendance, leave approvals, AI briefings, and performance insights. Everything your team needs, in one place.
           </p>
           <motion.div
             initial="hidden"
             animate="show"
             variants={container}
-            className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:mt-8 sm:gap-2"
+            className="mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:mt-8 sm:gap-2"
           >
             {HERO_FEATURES.map((f) => {
               const Icon = f.icon
@@ -356,10 +356,10 @@ export function LandingPage(): React.ReactElement {
                 <motion.span
                   key={f.label}
                   variants={item}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--app-border)] bg-[var(--app-card)] px-3 py-1.5 font-body text-xs font-medium text-[var(--app-text)] shadow-sm sm:px-3.5"
+                  className="inline-flex items-center gap-1 rounded-full border border-[var(--app-border)] bg-[var(--app-card)] px-2.5 py-1 font-body text-[11px] font-medium text-[var(--app-text)] shadow-sm sm:gap-1.5 sm:px-3.5 sm:py-1.5 sm:text-xs"
                 >
-                  <Icon className="h-3.5 w-3.5 shrink-0 text-[var(--app-muted)]" />
-                  <span className="truncate">{f.label}</span>
+                  <Icon className="h-3 w-3 shrink-0 text-[var(--app-muted)] sm:h-3.5 sm:w-3.5" />
+                  <span className="truncate max-w-[90px] sm:max-w-none">{f.label}</span>
                 </motion.span>
               )
             })}
@@ -368,18 +368,18 @@ export function LandingPage(): React.ReactElement {
       </section>
 
       {/* Demo stats strip */}
-      <section className="border-y border-[var(--app-border)] bg-[var(--app-card)] px-4 py-8 sm:px-6 sm:py-10">
+      <section className="border-y border-[var(--app-border)] bg-[var(--app-card)] px-3 py-6 sm:px-6 sm:py-10">
         <div className="mx-auto max-w-5xl">
           <motion.div
             variants={container}
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: '-40px' }}
-            className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4"
+            className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-4"
           >
             {DEMO_STATS.map((stat) => (
               <motion.div key={stat.label} variants={item} className="text-center">
-                <p className="font-display text-xl font-extrabold tracking-tight sm:text-2xl md:text-3xl">{stat.value}</p>
+                <p className="font-display text-lg font-extrabold tracking-tight sm:text-2xl md:text-3xl">{stat.value}</p>
                 <p className="mt-0.5 font-body text-[10px] font-medium uppercase tracking-wider text-[var(--app-muted)] sm:mt-1 sm:text-xs">
                   {stat.label}
                 </p>
@@ -390,7 +390,7 @@ export function LandingPage(): React.ReactElement {
       </section>
 
       {/* Core features — bento grid */}
-      <section className="px-4 py-16 sm:px-6 sm:py-20 md:py-28">
+      <section className="px-3 py-12 sm:px-6 sm:py-20 md:py-28">
         <div className="mx-auto max-w-5xl">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -442,7 +442,7 @@ export function LandingPage(): React.ReactElement {
       </section>
 
       {/* All features — grid */}
-      <section className="border-t border-[var(--app-border)] bg-[var(--app-card)]/30 px-4 py-16 sm:px-6 sm:py-20 md:py-28">
+      <section className="border-t border-[var(--app-border)] bg-[var(--app-card)]/30 px-3 py-12 sm:px-6 sm:py-20 md:py-28">
         <div className="mx-auto max-w-5xl">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -489,7 +489,7 @@ export function LandingPage(): React.ReactElement {
       </section>
 
       {/* Client reviews */}
-      <section className="border-t border-[var(--app-border)] px-4 py-14 sm:px-6 sm:py-16">
+      <section className="border-t border-[var(--app-border)] px-3 py-10 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-5xl">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -538,7 +538,7 @@ export function LandingPage(): React.ReactElement {
       </section>
 
       {/* Community posts — bento */}
-      <section className="border-t border-[var(--app-border)] bg-[var(--app-card)]/30 px-4 py-14 sm:px-6 sm:py-16">
+      <section className="border-t border-[var(--app-border)] bg-[var(--app-card)]/30 px-3 py-10 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-5xl">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -589,7 +589,7 @@ export function LandingPage(): React.ReactElement {
       </section>
 
       {/* Pricing */}
-      <section className="border-t border-[var(--app-border)] bg-[var(--app-card)]/50 px-4 py-16 sm:px-6 sm:py-20 md:py-28">
+      <section className="border-t border-[var(--app-border)] bg-[var(--app-card)]/50 px-3 py-12 sm:px-6 sm:py-20 md:py-28">
         <div className="mx-auto max-w-5xl">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -612,7 +612,7 @@ export function LandingPage(): React.ReactElement {
             whileInView="show"
             viewport={{ once: true, margin: '-40px' }}
             variants={container}
-            className="mt-10 grid gap-4 sm:mt-12 sm:gap-6 md:grid-cols-3"
+            className="mt-8 grid gap-4 sm:mt-12 sm:gap-6 md:grid-cols-2 lg:grid-cols-3"
           >
             {PRICING_PLANS.map((plan) => (
               <motion.article
@@ -681,7 +681,7 @@ export function LandingPage(): React.ReactElement {
       </section>
 
       {/* CTA */}
-      <section className="border-t border-[var(--app-border)] px-4 py-16 sm:px-6 sm:py-20">
+      <section className="border-t border-[var(--app-border)] px-3 py-12 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-2xl text-center">
           <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <h2 className="font-display text-xl font-bold tracking-tight sm:text-2xl md:text-3xl">Ready to get started?</h2>
@@ -692,7 +692,7 @@ export function LandingPage(): React.ReactElement {
               <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} className="w-full sm:w-auto">
                 <Link
                   to="/register"
-                  className="landing-btn-primary inline-block w-full rounded-xl bg-[var(--app-text)] px-6 py-3.5 text-center font-body text-sm font-semibold text-[var(--app-bg)] sm:w-auto sm:px-8"
+                  className="landing-btn-primary inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-[var(--app-text)] px-6 py-3.5 text-center font-body text-sm font-semibold text-[var(--app-bg)] sm:min-h-0 sm:w-auto sm:px-8"
                 >
                   Create account
                 </Link>
@@ -702,7 +702,7 @@ export function LandingPage(): React.ReactElement {
                   href={API_DOCS}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block w-full rounded-xl border border-[var(--app-border)] px-6 py-3.5 text-center font-body text-sm font-semibold transition hover:bg-[var(--app-card)] sm:w-auto sm:px-8"
+                  className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[var(--app-border)] px-6 py-3.5 text-center font-body text-sm font-semibold transition hover:bg-[var(--app-card)] sm:min-h-0 sm:w-auto sm:px-8"
                 >
                   Open API Docs
                 </a>
@@ -714,7 +714,7 @@ export function LandingPage(): React.ReactElement {
 
       {/* Footer */}
       <footer className="border-t border-[var(--app-border)] bg-[var(--app-card)]">
-        <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-5xl px-3 py-8 sm:px-6 sm:py-12">
           <div className="grid gap-8 sm:grid-cols-2 sm:gap-10 md:grid-cols-4">
             <div>
               <div className="flex items-center gap-2">

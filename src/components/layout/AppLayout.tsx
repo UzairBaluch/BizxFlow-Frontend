@@ -36,7 +36,7 @@ export function AppLayout({ title, children }: AppLayoutProps): React.ReactEleme
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="flex-1 overflow-auto p-7"
+          className="flex-1 overflow-auto p-4 sm:p-5 md:p-7"
         >
           {children}
         </motion.main>

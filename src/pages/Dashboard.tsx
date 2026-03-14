@@ -37,25 +37,25 @@ export function DashboardPage(): React.ReactElement {
 
   if (isCompany) {
     return (
-      <div className="space-y-7">
-        <Card className="p-8">
-          <h2 className="font-display text-xl font-bold text-[var(--app-text)]">Welcome, {company?.companyName ?? 'Company'}</h2>
-          <p className="mt-2 font-body text-sm text-[var(--app-muted)]">
+      <div className="space-y-5 sm:space-y-7">
+        <Card className="p-4 sm:p-6 md:p-8">
+          <h2 className="font-display text-lg font-bold text-[var(--app-text)] sm:text-xl">Welcome, {company?.companyName ?? 'Company'}</h2>
+          <p className="mt-1.5 font-body text-xs text-[var(--app-muted)] sm:mt-2 sm:text-sm">
             Manage your company settings and users from here.
           </p>
-          <div className="mt-6 flex flex-wrap gap-4">
+          <div className="mt-4 flex flex-col gap-3 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-4">
             <Link
               to="/profile"
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] px-4 py-3 font-body text-sm font-medium text-[var(--app-text)] transition hover:bg-[var(--app-border)]/50"
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] px-4 py-3 font-body text-sm font-medium text-[var(--app-text)] transition hover:bg-[var(--app-border)]/50 sm:min-h-0"
             >
-              <Settings className="h-5 w-5" />
+              <Settings className="h-5 w-5 shrink-0" />
               Company settings
             </Link>
             <Link
               to="/users"
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] px-4 py-3 font-body text-sm font-medium text-[var(--app-text)] transition hover:bg-[var(--app-border)]/50"
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] px-4 py-3 font-body text-sm font-medium text-[var(--app-text)] transition hover:bg-[var(--app-border)]/50 sm:min-h-0"
             >
-              <Users className="h-5 w-5" />
+              <Users className="h-5 w-5 shrink-0" />
               Users
             </Link>
           </div>
@@ -74,9 +74,9 @@ export function DashboardPage(): React.ReactElement {
 
   if (error) {
     return (
-      <Card className="p-8">
+      <Card className="p-4 sm:p-6 md:p-8">
         <p className="font-body text-sm text-[var(--app-text)]">{error}</p>
-        <p className="mt-2 font-body text-sm text-[var(--app-muted)]">Sign in to load live data.</p>
+        <p className="mt-2 font-body text-xs text-[var(--app-muted)] sm:text-sm">Sign in to load live data.</p>
       </Card>
     )
   }
@@ -93,8 +93,8 @@ export function DashboardPage(): React.ReactElement {
   const recentActivity: RecentActivity[] = []
 
   return (
-    <div className="space-y-7">
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-5 sm:space-y-7">
+      <section className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         {totals.map((item, i) => (
           <StatCard
             key={item.label}
@@ -107,9 +107,9 @@ export function DashboardPage(): React.ReactElement {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-5">
-          <CardTitle className="mb-4">Task status</CardTitle>
-          <div className="min-h-[240px] w-full min-w-0" style={{ height: 240 }}>
+        <Card className="min-w-0 p-4 sm:p-5">
+          <CardTitle className="mb-3 sm:mb-4">Task status</CardTitle>
+          <div className="min-h-[200px] w-full min-w-0 sm:min-h-[240px]" style={{ height: 240 }}>
             {taskChartData.length === 0 ? (
               <div className="flex h-full items-center justify-center font-body text-sm text-[var(--app-muted)]">
                 No data
@@ -145,9 +145,9 @@ export function DashboardPage(): React.ReactElement {
           </div>
         </Card>
 
-        <Card className="p-5">
-          <CardTitle className="mb-4">Leave status</CardTitle>
-          <div className="min-h-[240px] w-full min-w-0" style={{ height: 240 }}>
+        <Card className="min-w-0 p-4 sm:p-5">
+          <CardTitle className="mb-3 sm:mb-4">Leave status</CardTitle>
+          <div className="min-h-[200px] w-full min-w-0 sm:min-h-[240px]" style={{ height: 240 }}>
             {leaveChartData.length === 0 ? (
               <div className="flex h-full items-center justify-center font-body text-sm text-[var(--app-muted)]">
                 No data
@@ -179,8 +179,8 @@ export function DashboardPage(): React.ReactElement {
         </Card>
       </section>
 
-      <Card className="p-5">
-        <CardTitle className="mb-4">Recent activity</CardTitle>
+      <Card className="min-w-0 p-4 sm:p-5">
+        <CardTitle className="mb-3 sm:mb-4">Recent activity</CardTitle>
         <ul className="space-y-0">
           {recentActivity.length === 0 ? (
             <li className="py-4 text-center font-body text-sm text-[var(--app-muted)]">No recent activity</li>

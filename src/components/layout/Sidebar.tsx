@@ -75,7 +75,7 @@ export function Sidebar(): React.ReactElement {
 
   const navLinkClass = (isActive: boolean) =>
     cn(
-      'flex items-center gap-3 rounded-xl py-2.5 pr-3 pl-[12px] font-body text-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-text)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-card)] border-l-[3px]',
+      'flex min-h-[44px] items-center gap-3 rounded-xl py-3 pr-3 pl-[12px] font-body text-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-text)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-card)] border-l-[3px] sm:min-h-0 sm:py-2.5',
       isActive
         ? 'bg-[var(--app-text)]/10 text-[var(--app-text)] font-medium border-[var(--app-text)]'
         : 'border-transparent text-[var(--app-muted)] hover:bg-[var(--app-border)]/80 hover:text-[var(--app-text)]'
@@ -91,14 +91,14 @@ export function Sidebar(): React.ReactElement {
       {/* Top: landing-style collapse button only (no logo), then app name when expanded */}
       <div
         className={cn(
-          'flex h-16 shrink-0 items-center border-b border-[var(--app-border)]',
+          'flex h-14 shrink-0 items-center border-b border-[var(--app-border)] sm:h-16',
           collapsed ? 'justify-center px-2' : 'gap-2 px-3'
         )}
       >
         <button
           type="button"
           onClick={toggle}
-          className="landing-theme-btn flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--app-muted)] transition-colors hover:bg-[var(--app-card)] hover:text-[var(--app-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-text)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-card)]"
+          className="landing-theme-btn flex h-9 w-9 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-[var(--app-muted)] transition-colors hover:bg-[var(--app-card)] hover:text-[var(--app-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-text)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-card)] sm:min-h-0 sm:min-w-0"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <ChevronLeft className={cn('h-5 w-5 shrink-0', collapsed && 'rotate-180')} />
@@ -217,20 +217,20 @@ export function Sidebar(): React.ReactElement {
       </nav>
 
       {/* Account block: company or user */}
-      <div className={cn('shrink-0 overflow-hidden border-t border-[var(--app-border)] bg-[var(--app-bg)]/50 p-3', collapsed && 'flex flex-col items-center')}>
+      <div className={cn('shrink-0 overflow-hidden border-t border-[var(--app-border)] bg-[var(--app-bg)]/50 px-3 py-3', collapsed && 'flex flex-col items-center')}>
         <div
           className={cn(
-            'flex min-w-0 items-center gap-3 rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] p-3',
-            collapsed && 'justify-center p-2'
+            'flex min-w-0 w-full items-center gap-3 rounded-xl border-l-[3px] border-transparent py-2.5 pr-3 pl-[12px]',
+            collapsed && 'justify-center p-0 pl-0 pr-0'
           )}
         >
-          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-[var(--app-border)] bg-[var(--app-border)] ring-2 ring-[var(--app-card)]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--app-border)] bg-[var(--app-border)]">
             {company?.logo ? (
               <img src={company.logo} alt="" className="h-full w-full object-cover" />
             ) : user?.profilePicture ? (
               <img src={user.profilePicture} alt="" className="h-full w-full object-cover" />
             ) : (
-              <span className="flex h-full w-full items-center justify-center font-body text-sm font-semibold text-[var(--app-muted)]">
+              <span className="flex h-full w-full items-center justify-center text-center font-body text-sm font-semibold text-[var(--app-muted)]">
                 {(company?.companyName ?? user?.fullName ?? '?').charAt(0)}
               </span>
             )}
@@ -239,7 +239,7 @@ export function Sidebar(): React.ReactElement {
             initial={false}
             animate={{ opacity: collapsed ? 0 : 1 }}
             transition={{ duration: 0.1 }}
-            className="min-w-0 flex-1 overflow-hidden"
+            className={cn('min-w-0 flex-1 overflow-hidden', collapsed && 'w-0 min-w-0 flex-none')}
           >
             <p className="truncate font-body text-sm font-semibold text-[var(--app-text)]">
               {company?.companyName ?? user?.fullName ?? 'Account'}
@@ -249,16 +249,16 @@ export function Sidebar(): React.ReactElement {
             </p>
           </motion.div>
         </div>
-        <div className={cn('mt-2 flex gap-1', collapsed && 'flex-col')}>
+        <div className={cn('mt-2 w-full', collapsed && 'flex justify-center')}>
           <button
             type="button"
             onClick={handleLogout}
             className={cn(
-              'flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 font-body text-xs font-medium text-[var(--app-muted)] transition-colors hover:bg-[var(--app-border)] hover:text-[var(--app-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-text)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-card)]',
-              collapsed && 'w-full justify-center py-2'
+              'flex w-full min-h-[44px] items-center gap-3 rounded-xl border-l-[3px] border-transparent py-2.5 pr-3 pl-[12px] font-body text-sm font-medium text-[var(--app-muted)] transition-colors hover:bg-[var(--app-border)]/80 hover:text-[var(--app-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-text)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-card)] sm:min-h-0',
+              collapsed && 'w-9 min-w-9 flex-none justify-center px-0 pl-0 pr-0'
             )}
           >
-            <LogOut className="h-4 w-4 shrink-0" />
+            <LogOut className="h-5 w-5 shrink-0" />
             <motion.span initial={false} animate={{ opacity: collapsed ? 0 : 1 }} transition={{ duration: 0.1 }} className="overflow-hidden whitespace-nowrap">
               Logout
             </motion.span>
