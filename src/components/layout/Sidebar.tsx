@@ -46,12 +46,6 @@ const FEATURES_NAV = [
 
 const MANAGEMENT_NAV = [{ path: '/users', label: 'Users', icon: Users }] as const
 
-const ACCOUNT_NAV = [
-  { path: '/profile', label: 'Profile', icon: User },
-  { path: '/settings', label: 'Settings', icon: Settings },
-] as const
-// Settings route redirects to /profile
-
 function roleFromString(r: string): Role {
   if (r === 'Admin') return Role.Admin
   if (r === 'Manager') return Role.Manager
