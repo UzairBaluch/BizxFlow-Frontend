@@ -1,3 +1,7 @@
+/**
+ * API client for BizxFlow backend.
+ * Auth model: see docs/AUTH_MODEL.md (company vs user accounts, register, login, all-users, add-user).
+ */
 import type { ApiResponse } from '../types/api';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://bizxflow-production.up.railway.app';
@@ -37,6 +41,7 @@ export async function apiRequest<T>(
     return {
       success: false,
       message,
+      status: res.status,
     };
   }
   return json as ApiResponse<T>;
@@ -112,6 +117,18 @@ export const users = {
     form.append('picture', file);
     return apiRequest<{ user?: import('../types/api').User }>('/api/v1/users/update-profile', {
       method: 'PATCH',
+      body: form,
+    });
+  },
+  addUser: (body: import('../types/api').AddUserBody, picture?: File) => {
+    const form = new FormData();
+    form.append('fullName', body.fullName);
+    form.append('email', body.email);
+    form.append('password', body.password);
+    form.append('role', body.role ?? 'Employee');
+    if (picture) form.append('picture', picture);
+    return apiRequest<import('../types/api').User>('/api/v1/users/add-user', {
+      method: 'POST',
       body: form,
     });
   },

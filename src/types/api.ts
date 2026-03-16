@@ -1,3 +1,6 @@
+/**
+ * API types. Auth model (company vs user): see docs/AUTH_MODEL.md.
+ */
 export type Role = 'Admin' | 'Manager' | 'Employee';
 
 export type AccountType = 'company' | 'user';
@@ -28,6 +31,7 @@ export type ApiSuccess<T> = {
 export type ApiError = {
   success: false;
   message: string;
+  status?: number;
 };
 
 export type ApiResponse<T> = ApiSuccess<T> | ApiError;
@@ -96,6 +100,9 @@ export type DashboardData = {
   tasksByStatus?: { _id: TaskStatus; count: number }[];
   leavesByStatus?: { _id: LeaveStatus; count: number }[];
 };
+
+// Add user (company or Admin/Manager)
+export type AddUserBody = { fullName: string; email: string; password: string; role?: Role };
 
 // Paginated
 export type PaginatedUsers = { users: User[]; totalUsers: number };

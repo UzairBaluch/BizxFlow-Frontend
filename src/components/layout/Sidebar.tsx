@@ -66,7 +66,9 @@ export function Sidebar(): React.ReactElement {
   const navigate = useNavigate()
   const isCompany = accountType === 'company'
   const role = user?.role ? roleFromString(user.role) : Role.Employee
-  const canSeeManagement = !isCompany && (role === Role.Admin || role === Role.Manager)
+  const canSeeDashboard = isCompany || role === Role.Admin || role === Role.Manager
+  const canSeeManagement = canSeeDashboard // Dashboard and Add user / Users: company, Admin, Manager only
+  const profileLabel = isCompany ? 'Company settings' : 'Profile'
 
   function handleLogout(): void {
     logout()
@@ -117,33 +119,11 @@ export function Sidebar(): React.ReactElement {
       </div>
 
       <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-5">
-        {isCompany ? (
-          <>
-            <div className="space-y-0.5">
-              <p className={cn('mb-2.5 px-3 font-body text-[10px] font-semibold uppercase tracking-widest text-[var(--app-muted)]', collapsed && 'sr-only')}>
-                Company
-              </p>
-              <Link to="/profile" className={navLinkClass(location.pathname === '/profile')}>
-                <Settings className="h-5 w-5 shrink-0" />
-                <motion.span initial={false} animate={{ opacity: collapsed ? 0 : 1 }} transition={{ duration: 0.1 }} className="overflow-hidden whitespace-nowrap">
-                  Company settings
-                </motion.span>
-              </Link>
-              <Link to="/users" className={navLinkClass(location.pathname === '/users')}>
-                <Users className="h-5 w-5 shrink-0" />
-                <motion.span initial={false} animate={{ opacity: collapsed ? 0 : 1 }} transition={{ duration: 0.1 }} className="overflow-hidden whitespace-nowrap">
-                  Users
-                </motion.span>
-              </Link>
-            </div>
-          </>
-        ) : (
-          <>
         <div className="space-y-0.5">
           <p className={cn('mb-2.5 px-3 font-body text-[10px] font-semibold uppercase tracking-widest text-[var(--app-muted)]', collapsed && 'sr-only')}>
             Main
           </p>
-          {MAIN_NAV.map((item) => {
+          {MAIN_NAV.filter((item) => item.path !== '/dashboard' || canSeeDashboard).map((item) => {
             const isActive = location.pathname === item.path
             const Icon = item.icon
             return (
@@ -199,21 +179,19 @@ export function Sidebar(): React.ReactElement {
           <p className={cn('mb-2.5 px-3 font-body text-[10px] font-semibold uppercase tracking-widest text-[var(--app-muted)]', collapsed && 'sr-only')}>
             Account
           </p>
-          {ACCOUNT_NAV.map((item) => {
-            const isActive = location.pathname === item.path
-            const Icon = item.icon
-            return (
-              <Link key={item.path} to={item.path} className={navLinkClass(isActive)}>
-                <Icon className="h-5 w-5 shrink-0" />
-                <motion.span initial={false} animate={{ opacity: collapsed ? 0 : 1 }} transition={{ duration: 0.1 }} className="overflow-hidden whitespace-nowrap">
-                  {item.label}
-                </motion.span>
-              </Link>
-            )
-          })}
+          <Link to="/profile" className={navLinkClass(location.pathname === '/profile')}>
+            <User className="h-5 w-5 shrink-0" />
+            <motion.span initial={false} animate={{ opacity: collapsed ? 0 : 1 }} transition={{ duration: 0.1 }} className="overflow-hidden whitespace-nowrap">
+              {profileLabel}
+            </motion.span>
+          </Link>
+          <Link to="/settings" className={navLinkClass(location.pathname === '/settings')}>
+            <Settings className="h-5 w-5 shrink-0" />
+            <motion.span initial={false} animate={{ opacity: collapsed ? 0 : 1 }} transition={{ duration: 0.1 }} className="overflow-hidden whitespace-nowrap">
+              Settings
+            </motion.span>
+          </Link>
         </div>
-          </>
-        )}
       </nav>
 
       {/* Account block: company or user */}

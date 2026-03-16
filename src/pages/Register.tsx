@@ -32,7 +32,14 @@ export function RegisterPage(): React.ReactElement {
 
   return (
     <AuthOverLanding>
-      <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] p-4 shadow-lg sm:rounded-2xl sm:p-6 md:p-8">
+      <div className="relative rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] p-4 shadow-lg sm:rounded-2xl sm:p-6 md:p-8">
+        <Link
+          to="/"
+          aria-label="Close"
+          className="absolute right-3 top-3 flex h-10 w-10 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-[var(--app-muted)] transition-colors hover:bg-[var(--app-border)] hover:text-[var(--app-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-text)] focus-visible:ring-offset-2 sm:right-4 sm:top-4 sm:h-11 sm:w-11 sm:min-h-0 sm:min-w-0"
+        >
+          <span className="text-2xl leading-none sm:text-3xl">×</span>
+        </Link>
         <h1 className="text-center font-display text-lg font-bold tracking-tight text-[var(--app-text)] sm:text-xl md:text-2xl">
           Create company account
         </h1>

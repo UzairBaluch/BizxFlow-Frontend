@@ -1,7 +1,6 @@
 import { type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { Button } from './Button'
 
 export interface SlidePanelProps {
   open: boolean
@@ -41,9 +40,14 @@ export function SlidePanel({ open, onClose, title, children, className }: SlideP
               <h2 id="panel-title" className="font-display text-base font-bold text-[var(--app-text)]">
                 {title}
               </h2>
-              <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close">
-                ×
-              </Button>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="flex h-10 w-10 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-[var(--app-muted)] transition-colors hover:bg-[var(--app-border)] hover:text-[var(--app-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-text)] focus-visible:ring-offset-2 sm:h-11 sm:w-11 sm:min-h-0 sm:min-w-0"
+              >
+                <span className="text-2xl leading-none sm:text-3xl">×</span>
+              </button>
             </div>
             <div className="mt-6 overflow-y-auto">{children}</div>
           </motion.aside>

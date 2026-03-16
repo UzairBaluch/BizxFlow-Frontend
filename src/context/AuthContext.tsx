@@ -1,3 +1,6 @@
+/**
+ * Auth state and actions. Supports two account types (company | user) per docs/AUTH_MODEL.md.
+ */
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { User, Company, AccountType } from '../types/api';
 import * as api from '../api/client';
