@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils'
 import { useSidebarStore } from '@/stores/useSidebarStore'
 import { useAuth } from '@/context/AuthContext'
 import { Role } from '@/types/auth.types'
+import { BizxFlowLogo } from '@/components/BizxFlowLogo'
 
 const MAIN_NAV = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
@@ -103,12 +104,9 @@ export function Sidebar(): React.ReactElement {
           initial={false}
           animate={{ opacity: collapsed ? 0 : 1 }}
           transition={{ duration: 0.1 }}
-          className={cn(
-            'overflow-hidden whitespace-nowrap font-display text-lg font-bold tracking-tight text-[var(--app-text)]',
-            collapsed ? 'w-0' : 'min-w-0 flex-1'
-          )}
+          className={cn('flex min-w-0 flex-1 items-center overflow-hidden', collapsed ? 'w-0' : '')}
         >
-          BizxFlow
+          <BizxFlowLogo size="md" showText textOnly />
         </motion.span>
       </div>
 

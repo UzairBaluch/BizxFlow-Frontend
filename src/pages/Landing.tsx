@@ -28,6 +28,7 @@ import {
   Star,
   Newspaper,
 } from 'lucide-react'
+import { BizxFlowLogo } from '@/components/BizxFlowLogo'
 import { useThemeStore } from '@/stores/useThemeStore'
 
 const API_DOCS = 'https://bizxflow-production.up.railway.app/api-docs'
@@ -267,18 +268,15 @@ export function LandingPage(): React.ReactElement {
         className="sticky top-0 z-50 border-b border-[var(--app-border)] bg-[var(--app-bg)]/90 backdrop-blur-md"
       >
         <div className="mx-auto flex max-w-5xl items-center justify-between px-3 py-2.5 sm:px-6 sm:py-4">
-          <Link to="/" className="flex min-h-[44px] min-w-[44px] items-center gap-2 shrink-0 rounded-lg sm:min-h-0 sm:min-w-0">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--app-text)] font-display text-sm font-bold text-[var(--app-bg)] sm:h-8 sm:w-8">
-              B
-            </div>
-            <span className="font-display text-base font-bold tracking-tight sm:text-lg">BizxFlow</span>
+          <Link to="/" className="flex min-h-[44px] min-w-[44px] items-center shrink-0 rounded-lg sm:min-h-0 sm:min-w-0">
+            <BizxFlowLogo size="lg" showText textOnly />
           </Link>
           <div className="flex items-center gap-1 sm:gap-2">
             <motion.button
               type="button"
               onClick={toggleTheme}
               whileTap={{ scale: 0.9 }}
-              className="landing-theme-btn flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[var(--app-muted)] transition-colors hover:bg-[var(--app-card)] hover:text-[var(--app-text)] sm:h-9 sm:w-9"
+              className="landing-theme-btn flex h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-[var(--app-muted)] transition-colors hover:bg-[var(--app-card)] hover:text-[var(--app-text)] sm:h-10 sm:w-10 sm:min-h-0 sm:min-w-0 md:h-9 md:w-9"
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}

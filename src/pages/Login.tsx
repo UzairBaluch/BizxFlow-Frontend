@@ -42,7 +42,6 @@ export function LoginPage(): React.ReactElement {
         <h1 className="text-center font-display text-lg font-bold tracking-tight text-[var(--app-text)] sm:text-xl md:text-2xl">
           Sign in
         </h1>
-        <p className="mt-1.5 text-center font-body text-xs text-[var(--app-muted)] sm:mt-2 sm:text-sm">BizxFlow</p>
         <form onSubmit={handleSubmit} className="mt-5 space-y-4 sm:mt-8 sm:space-y-5">
           <Input
             label="Email"
@@ -62,6 +61,11 @@ export function LoginPage(): React.ReactElement {
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
           />
+          <div className="flex justify-end">
+            <Link to="/forgot-password" className="font-body text-sm text-[var(--app-muted)] underline hover:text-[var(--app-text)]">
+              Forgot password?
+            </Link>
+          </div>
           <Button type="submit" variant="primary" className="w-full min-h-[44px] py-3 text-base sm:min-h-0 sm:py-2 sm:text-sm" loading={submitting} disabled={submitting}>
             {submitting ? 'Signing in…' : 'Sign in'}
           </Button>

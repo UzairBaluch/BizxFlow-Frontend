@@ -2,9 +2,12 @@ import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
+import { auth } from '@/api/client'
 import { AuthOverLanding } from '@/components/AuthOverLanding'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+
+const MIN_PASSWORD_LENGTH = 8
 
 export function RegisterPage(): React.ReactElement {
   const [email, setEmail] = useState('')
@@ -12,13 +15,38 @@ export function RegisterPage(): React.ReactElement {
   const [companyName, setCompanyName] = useState('')
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { register } = useAuth()
   const { addToast } = useToast()
   const navigate = useNavigate()
 
+  async function validatePassword(value: string): Promise<string | null> {
+    if (!value.trim()) return null
+    if (value.length < MIN_PASSWORD_LENGTH) {
+      return `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
+    }
+    const res = await auth.validatePassword(value)
+    if (res.success) return null
+    const err = res as { message?: string; status?: number }
+    if (err.status === 404 || (err.status && err.status >= 500)) return null
+    return err.message ?? 'Password does not meet requirements'
+  }
+
+  async function handlePasswordBlur(): Promise<void> {
+    if (!password) return
+    const err = await validatePassword(password)
+    setPasswordError(err)
+  }
+
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
+    setPasswordError(null)
+    const pwdErr = await validatePassword(password)
+    if (pwdErr) {
+      setPasswordError(pwdErr)
+      return
+    }
     setSubmitting(true)
     const result = await register(email, password, companyName, logoFile ?? undefined)
     setSubmitting(false)
@@ -56,15 +84,26 @@ export function RegisterPage(): React.ReactElement {
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
           />
-          <Input
-            label="Password"
-            id="reg-password"
-            type="password"
-            autoComplete="new-password"
-            required
-            value={password}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-          />
+          <div>
+            <Input
+              label="Password"
+              id="reg-password"
+              type="password"
+              autoComplete="new-password"
+              required
+              value={password}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setPassword(e.target.value)
+                if (passwordError) setPasswordError(null)
+              }}
+              onBlur={handlePasswordBlur}
+            />
+            {passwordError && (
+              <p className="mt-1 font-body text-xs text-red-500" role="alert">
+                {passwordError}
+              </p>
+            )}
+          </div>
           <Input
             label="Company name"
             id="reg-companyName"

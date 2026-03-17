@@ -74,6 +74,27 @@ export const auth = {
       body: JSON.stringify(body),
       token: null,
     }),
+  /** Validate password (e.g. strength/requirements) before register. Backend may return 400 with message. */
+  validatePassword: (password: string) =>
+    apiRequest<{ valid?: boolean }>('/api/v1/users/validate-password', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+      token: null,
+    }),
+  /** Request password reset email. Backend sends email with reset link. */
+  forgotPassword: (email: string) =>
+    apiRequest<unknown>('/api/v1/users/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+      token: null,
+    }),
+  /** Set new password using token from reset email. */
+  resetPassword: (token: string, newPassword: string) =>
+    apiRequest<unknown>('/api/v1/users/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+      token: null,
+    }),
   logout: () =>
     apiRequest<unknown>('/api/v1/users/logout', { method: 'POST', body: '{}' }),
   me: () =>
