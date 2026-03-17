@@ -29,3 +29,7 @@
 Use this (or equivalent) on the Company users page:
 
 > This list shows user accounts (employees) in your company—not your company account. You’re signed in as the company, so you won’t appear as a row here. Add employees with “Add user” and they will appear in this table.
+
+## Multi-tenancy
+
+Data is scoped by company. For who can call company-wide endpoints (all-users, record-all, all-leaves, etc.) and the backend rollout status, see [MULTI_TENANCY.md](./MULTI_TENANCY.md).

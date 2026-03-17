@@ -9,8 +9,9 @@ import { DataTable } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 
 export function AttendancePage(): React.ReactElement {
-  const { user } = useAuth()
-  const isAdmin = user?.role === 'Admin'
+  const { accountType, user } = useAuth()
+  const canSeeAllAttendance = accountType === 'company' || user?.role === 'Admin' || user?.role === 'Manager'
+  const isEmployee = accountType === 'user' && user?.role === 'Employee'
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [checking, setChecking] = useState(false)
@@ -18,7 +19,7 @@ export function AttendancePage(): React.ReactElement {
 
   const load = useCallback(() => {
     setLoading(true)
-    const api = isAdmin ? attendanceApi.allRecords() : attendanceApi.myRecord()
+    const api = canSeeAllAttendance ? attendanceApi.allRecords() : attendanceApi.myRecord()
     api
       .then((res) => {
         if (res.success && res.data) {
@@ -27,7 +28,7 @@ export function AttendancePage(): React.ReactElement {
         }
       })
       .finally(() => setLoading(false))
-  }, [isAdmin])
+  }, [canSeeAllAttendance])
 
   useEffect(() => {
     load()
@@ -70,7 +71,7 @@ export function AttendancePage(): React.ReactElement {
 
   return (
     <div className="space-y-7">
-      {!isAdmin && (
+      {isEmployee && (
         <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
           <div className="flex flex-1 items-center gap-6">
             <span className="font-body text-sm text-[var(--app-muted)]">Check-in: —</span>
