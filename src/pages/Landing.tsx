@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { BizxFlowLogo } from '@/components/BizxFlowLogo'
 import { useThemeStore } from '@/stores/useThemeStore'
+import { FaqSection } from '@/components/FaqSection'
 
 const API_DOCS = 'https://bizxflow-production.up.railway.app/api-docs'
 
@@ -677,6 +678,9 @@ export function LandingPage(): React.ReactElement {
         </div>
       </section>
 
+      {/* FAQ */}
+      <FaqSection />
+
       {/* CTA */}
       <section className="border-t border-[var(--app-border)] px-3 py-12 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-2xl text-center">
@@ -712,8 +716,8 @@ export function LandingPage(): React.ReactElement {
       {/* Footer */}
       <footer className="border-t border-[var(--app-border)] bg-[var(--app-card)]">
         <div className="mx-auto max-w-5xl px-3 py-8 sm:px-6 sm:py-12">
-          <div className="grid gap-8 sm:grid-cols-2 sm:gap-10 md:grid-cols-4">
-            <div>
+          <div className="grid grid-cols-2 gap-6 sm:gap-10 md:grid-cols-4">
+            <div className="text-center sm:text-left">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--app-text)] font-display text-sm font-bold text-[var(--app-bg)]">
                   B
@@ -724,11 +728,11 @@ export function LandingPage(): React.ReactElement {
                 The complete workforce app: projects, meetings, chat, attendance, tasks, leave, and more—all in one place.
               </p>
             </div>
-            <div>
+            <div className="text-center sm:text-left">
               <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-[var(--app-text)]">
                 Product
               </h4>
-              <ul className="mt-4 space-y-2 font-body text-sm text-[var(--app-muted)]">
+              <ul className="mt-4 flex flex-col items-center space-y-2 font-body text-sm text-[var(--app-muted)] sm:items-start">
                 <li>
                   <a href={API_DOCS} target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--app-text)]">
                     API Docs
@@ -739,28 +743,38 @@ export function LandingPage(): React.ReactElement {
                 </li>
               </ul>
             </div>
-            <div>
+            <div className="text-center sm:text-left">
               <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-[var(--app-text)]">
                 Company
               </h4>
-              <ul className="mt-4 space-y-2 font-body text-sm text-[var(--app-muted)]">
-                <li><a href="#" className="transition hover:text-[var(--app-text)]">About</a></li>
-                <li><a href="#" className="transition hover:text-[var(--app-text)]">Contact</a></li>
-                <li><a href="#" className="transition hover:text-[var(--app-text)]">Careers</a></li>
+              <ul className="mt-4 flex flex-col items-center space-y-2 font-body text-sm text-[var(--app-muted)] sm:items-start">
+                <li>
+                  <a href="#" className="transition hover:text-[var(--app-text)]">About</a>
+                </li>
+                <li>
+                  <a href="#" className="transition hover:text-[var(--app-text)]">Contact</a>
+                </li>
+                <li>
+                  <a href="#" className="transition hover:text-[var(--app-text)]">Careers</a>
+                </li>
               </ul>
             </div>
-            <div>
+            <div className="text-center sm:text-left">
               <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-[var(--app-text)]">
                 Legal
               </h4>
-              <ul className="mt-4 space-y-2 font-body text-sm text-[var(--app-muted)]">
-                <li><a href="#" className="transition hover:text-[var(--app-text)]">Privacy</a></li>
-                <li><a href="#" className="transition hover:text-[var(--app-text)]">Terms</a></li>
+              <ul className="mt-4 flex flex-col items-center space-y-2 font-body text-sm text-[var(--app-muted)] sm:items-start">
+                <li>
+                  <a href="#" className="transition hover:text-[var(--app-text)]">Privacy</a>
+                </li>
+                <li>
+                  <a href="#" className="transition hover:text-[var(--app-text)]">Terms</a>
+                </li>
               </ul>
             </div>
           </div>
           <div className="mt-10 border-t border-[var(--app-border)] pt-8">
-            <p className="font-body text-xs text-[var(--app-muted)]">
+            <p className="text-center font-body text-xs text-[var(--app-muted)]">
               © {new Date().getFullYear()} BizxFlow. All rights reserved.
             </p>
           </div>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { attendance as attendanceApi } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
-import type { AttendanceRecord } from '@/types/api'
+import type { ApiError, AttendanceRecord } from '@/types/api'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { DataTable } from '@/components/ui/DataTable'
@@ -25,10 +25,15 @@ export function AttendancePage(): React.ReactElement {
         if (res.success && res.data) {
           const d = res.data as { records?: AttendanceRecord[] }
           setRecords(d.records ?? [])
+        } else {
+          const err = res as ApiError
+          const msg =
+            err.status === 401 ? 'Unauthorized. Please sign in again.' : (err.message ?? 'Failed to load attendance')
+          addToast(msg, 'error')
         }
       })
       .finally(() => setLoading(false))
-  }, [canSeeAllAttendance])
+  }, [canSeeAllAttendance, addToast])
 
   useEffect(() => {
     load()
@@ -43,7 +48,14 @@ export function AttendancePage(): React.ReactElement {
           addToast('Checked in.')
           load()
         } else {
-          addToast((res as { message: string }).message ?? 'Failed', 'error')
+          const err = res as ApiError
+          const msg =
+            err.status === 401
+              ? 'Unauthorized. Please sign in again.'
+              : err.status === 409
+                ? err.message ?? 'Record already exists.'
+                : err.message ?? 'Failed to check in'
+          addToast(msg, 'error')
         }
       })
       .finally(() => setChecking(false))
@@ -58,7 +70,16 @@ export function AttendancePage(): React.ReactElement {
           addToast('Checked out.')
           load()
         } else {
-          addToast((res as { message: string }).message ?? 'Failed', 'error')
+          const err = res as ApiError
+          const msg =
+            err.status === 401
+              ? 'Unauthorized. Please sign in again.'
+              : err.status === 404
+                ? err.message ?? 'No check-in record found.'
+                : err.status === 409
+                  ? err.message ?? 'Already checked out.'
+                  : err.message ?? 'Failed to check out'
+          addToast(msg, 'error')
         }
       })
       .finally(() => setChecking(false))

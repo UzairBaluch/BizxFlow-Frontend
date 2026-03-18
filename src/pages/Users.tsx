@@ -43,9 +43,12 @@ export function UsersPage(): React.ReactElement {
           setTotal(res.data.totalUsers ?? 0)
         } else {
           const err = res as { message: string; status?: number }
-          const msg = err.status === 403
-            ? "You don't have permission to view users."
-            : (err.message ?? 'Failed to load users')
+          const msg =
+            err.status === 401
+              ? 'Unauthorized. Please sign in again.'
+              : err.status === 403
+                ? "You don't have permission to view users."
+                : (err.message ?? 'Failed to load users')
           addToast(msg, 'error')
         }
       })
@@ -99,11 +102,15 @@ export function UsersPage(): React.ReactElement {
     } else {
       const err = res as { message: string; status?: number }
       const msg =
-        err.status === 403
-          ? "You don't have permission to add users."
-          : err.status === 404
-            ? 'Add user is not available on this server yet.'
-            : (err.message ?? 'Failed to add user')
+        err.status === 401
+          ? 'Unauthorized. Please sign in again.'
+          : err.status === 403
+            ? "You don't have permission to add users."
+            : err.status === 404
+              ? 'Add user is not available on this server yet.'
+              : err.status === 409
+                ? err.message ?? 'User already exists.'
+                : (err.message ?? 'Failed to add user')
       addToast(msg, 'error')
     }
   }
