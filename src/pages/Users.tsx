@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { users as usersApi } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
+import { isAdminOrManagerRole } from '@/lib/authAccess'
 import type { User, Role } from '@/types/api'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -12,9 +13,31 @@ import { DataTable, Pagination } from '@/components/ui/DataTable'
 
 const ROLES: Role[] = ['Admin', 'Manager', 'Employee']
 
+const selectClassName =
+  'w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] px-3 py-2.5 font-body text-sm text-[var(--app-text)] outline-none focus:border-[var(--app-text)] disabled:opacity-50'
+
+function normalizeRoleValue(r: string | undefined): Role {
+  if (r == null || r === '') return 'Employee'
+  const x = r.trim().toLowerCase()
+  if (x === 'admin') return 'Admin'
+  if (x === 'manager') return 'Manager'
+  return 'Employee'
+}
+
+function isUserMutationOk(res: unknown): boolean {
+  if (res == null || typeof res !== 'object') return false
+  const r = res as Record<string, unknown>
+  if (r.success === false) return false
+  if (r.success === true) return true
+  if (typeof r._httpStatus === 'number' && r._httpStatus >= 200 && r._httpStatus < 300) return true
+  return false
+}
+
 export function UsersPage(): React.ReactElement {
   const { accountType, user } = useAuth()
-  const canListUsers = accountType === 'company' || (user && (user.role === 'Admin' || user.role === 'Manager'))
+  const canListUsers = accountType === 'company' || (user != null && isAdminOrManagerRole(user.role))
+  /** Company, Admin, or Manager — edit roles & delete users (except self-delete for user sessions). */
+  const canManageDirectory = canListUsers
   const canAddUser = canListUsers
   const [list, setList] = useState<User[]>([])
   const [total, setTotal] = useState(0)
@@ -28,6 +51,12 @@ export function UsersPage(): React.ReactElement {
   const [addRole, setAddRole] = useState<Role>('Employee')
   const [addPicture, setAddPicture] = useState<File | null>(null)
   const [addSubmitting, setAddSubmitting] = useState(false)
+  /** User open in Edit modal (role + optional remove). */
+  const [editUser, setEditUser] = useState<User | null>(null)
+  const [editRoleDraft, setEditRoleDraft] = useState<Role>('Employee')
+  const [editSaving, setEditSaving] = useState(false)
+  const [editDeleteSubmitting, setEditDeleteSubmitting] = useState(false)
+  const [editDeleteConfirm, setEditDeleteConfirm] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const limit = 10
   const { addToast } = useToast()
@@ -63,6 +92,75 @@ export function UsersPage(): React.ReactElement {
   }, [canListUsers, load])
 
   const totalPages = Math.ceil(total / limit) || 1
+
+  const canDeleteUserRow = (target: User): boolean => {
+    if (!canManageDirectory) return false
+    if (accountType === 'user' && user?._id != null && target._id === user._id) return false
+    return true
+  }
+
+  /** Backend rejects changing your own role when logged in as a user JWT (403). */
+  const canChangeRoleForRow = (target: User): boolean => {
+    if (!canManageDirectory) return false
+    if (accountType === 'user' && user?._id != null && target._id === user._id) return false
+    return true
+  }
+
+  function openEditUser(u: User): void {
+    setEditUser(u)
+    setEditRoleDraft(normalizeRoleValue(u.role))
+    setEditDeleteConfirm(false)
+  }
+
+  function closeEditUser(): void {
+    if (editSaving || editDeleteSubmitting) return
+    setEditUser(null)
+    setEditDeleteConfirm(false)
+  }
+
+  function handleSaveRoleFromEdit(): void {
+    if (editUser == null || !canChangeRoleForRow(editUser)) return
+    const current = normalizeRoleValue(editUser.role)
+    if (editRoleDraft === current) {
+      addToast('No role change to save.')
+      return
+    }
+    setEditSaving(true)
+    usersApi
+      .updateRole(editUser._id, { role: editRoleDraft })
+      .then((res) => {
+        if (isUserMutationOk(res)) {
+          addToast(`Role updated to ${editRoleDraft}.`)
+          setEditUser((prev) => (prev && prev._id === editUser._id ? { ...prev, role: editRoleDraft } : prev))
+          load()
+        } else {
+          const err = res as { message?: string; status?: number }
+          addToast(err.message ?? 'Could not update role.', 'error')
+        }
+      })
+      .catch(() => addToast('Could not update role.', 'error'))
+      .finally(() => setEditSaving(false))
+  }
+
+  function handleConfirmDeleteFromEdit(): void {
+    if (editUser == null || !canDeleteUserRow(editUser)) return
+    setEditDeleteSubmitting(true)
+    usersApi
+      .deleteUser(editUser._id)
+      .then((res) => {
+        if (isUserMutationOk(res)) {
+          addToast(`${editUser.fullName} removed from company.`)
+          setEditUser(null)
+          setEditDeleteConfirm(false)
+          load()
+        } else {
+          const err = res as { message?: string; status?: number }
+          addToast(err.message ?? 'Could not remove user.', 'error')
+        }
+      })
+      .catch(() => addToast('Could not remove user.', 'error'))
+      .finally(() => setEditDeleteSubmitting(false))
+  }
 
   if (!canListUsers) {
     return (
@@ -119,6 +217,11 @@ export function UsersPage(): React.ReactElement {
     <div className="min-w-0 space-y-6 sm:space-y-7">
       <div className="min-w-0">
         <h2 className="font-display text-lg font-bold text-[var(--app-text)] sm:text-xl">Company users</h2>
+        <p className="mt-1 font-body text-sm text-[var(--app-muted)]">
+          {canManageDirectory
+            ? 'Use Edit on a row to change role or remove a user. While signed in as a team user, you cannot change your own role or remove your own account.'
+            : 'Directory of users in your organization.'}
+        </p>
       </div>
 
       <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between sm:gap-4">
@@ -173,7 +276,9 @@ export function UsersPage(): React.ReactElement {
               className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] px-3 py-2.5 font-body text-sm text-[var(--app-text)] outline-none transition focus:border-[var(--app-text)]"
             >
               {ROLES.map((r) => (
-                <option key={r} value={r}>{r}</option>
+                <option key={r} value={r}>
+                  {r}
+                </option>
               ))}
             </select>
           </div>
@@ -198,6 +303,109 @@ export function UsersPage(): React.ReactElement {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal open={editUser != null} onClose={closeEditUser} title="Edit user" className="max-w-[440px]">
+        {editUser != null && (
+          <div className="space-y-6">
+            <div className="rounded-lg border border-[var(--app-border)] bg-[var(--app-bg)]/50 p-4">
+              <p className="font-body text-sm font-medium text-[var(--app-text)]">{editUser.fullName}</p>
+              <p className="mt-0.5 font-body text-sm text-[var(--app-muted)]">{editUser.email}</p>
+            </div>
+
+            <div>
+              <h3 className="mb-2 font-body text-xs font-semibold uppercase tracking-wider text-[var(--app-muted)]">
+                Role
+              </h3>
+              {canChangeRoleForRow(editUser) ? (
+                <>
+                  <select
+                    aria-label="User role"
+                    className={selectClassName}
+                    value={editRoleDraft}
+                    disabled={editSaving}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEditRoleDraft(e.target.value as Role)}
+                  >
+                    {ROLES.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      loading={editSaving}
+                      disabled={editSaving || editRoleDraft === normalizeRoleValue(editUser.role)}
+                      onClick={handleSaveRoleFromEdit}
+                    >
+                      Save role
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="font-body text-sm text-[var(--app-text)]">
+                    {normalizeRoleValue(editUser.role)}
+                  </p>
+                  <p className="mt-2 font-body text-sm text-[var(--app-muted)]">
+                    You can&apos;t change your own role while signed in as this account.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div className="border-t border-[var(--app-border)] pt-5">
+              <h3 className="mb-2 font-body text-xs font-semibold uppercase tracking-wider text-[var(--app-muted)]">
+                Remove user
+              </h3>
+              {canDeleteUserRow(editUser) ? (
+                editDeleteConfirm ? (
+                  <div className="space-y-3">
+                    <p className="font-body text-sm text-[var(--app-text)]">
+                      Remove <span className="font-semibold">{editUser.fullName}</span> from the company? They will lose access
+                      to this workspace.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={editDeleteSubmitting}
+                        disabled={editDeleteSubmitting}
+                        onClick={handleConfirmDeleteFromEdit}
+                      >
+                        Yes, remove user
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={editDeleteSubmitting}
+                        onClick={() => setEditDeleteConfirm(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button variant="secondary" size="sm" onClick={() => setEditDeleteConfirm(true)}>
+                    Remove from company…
+                  </Button>
+                )
+              ) : (
+                <p className="font-body text-sm text-[var(--app-muted)]">
+                  You can&apos;t remove your own account while signed in as this user.
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end border-t border-[var(--app-border)] pt-4">
+              <Button variant="ghost" size="sm" disabled={editSaving || editDeleteSubmitting} onClick={closeEditUser}>
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       <Card className="min-w-0 overflow-hidden p-0">
@@ -239,7 +447,24 @@ export function UsersPage(): React.ReactElement {
                   ),
                 },
                 { key: 'email', header: 'Email', render: (u) => u.email },
-                { key: 'createdAt', header: 'Joined', render: (u) => (u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—') },
+                {
+                  key: 'createdAt',
+                  header: 'Joined',
+                  render: (u) => (u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'),
+                },
+                ...(canManageDirectory
+                  ? [
+                      {
+                        key: '_actions',
+                        header: 'Actions',
+                        render: (u: User) => (
+                          <Button size="sm" variant="secondary" onClick={() => openEditUser(u)}>
+                            Edit
+                          </Button>
+                        ),
+                      },
+                    ]
+                  : []),
               ]}
               data={list}
               keyExtractor={(u) => u._id}

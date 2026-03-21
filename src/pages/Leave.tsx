@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { leave as leaveApi } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
+import { isAdminOrManagerRole } from '@/lib/authAccess'
+import { isLeavesListOk, parseLeavesFromResponse } from '@/lib/leaveListParse'
 import type { LeaveRequest, LeaveReviewStatus, LeaveTypeSubmit } from '@/types/api'
 import { displayLeaveStatus, isLeavePending } from '@/lib/leaveStatus'
 import { Card } from '@/components/ui/Card'
@@ -18,19 +20,97 @@ const LEAVE_TYPES: { value: LeaveTypeSubmit; label: string }[] = [
   { value: 'Casual', label: 'Casual' },
 ]
 
-function userName(r: LeaveRequest): string {
-  if (typeof r.user === 'object' && r.user && 'fullName' in r.user) {
-    return (r.user as { fullName: string }).fullName
+/** Display name from a user ref (object, id string, nested shapes). */
+function personRecordLabel(ref: unknown): string {
+  if (ref == null || ref === '') return '—'
+  if (typeof ref === 'string') {
+    const t = ref.trim()
+    if (t === '') return '—'
+    if (/^[a-f\d]{24}$/i.test(t)) return `User …${t.slice(-6)}`
+    return t
   }
-  return String(r.user)
+  if (typeof ref === 'object' && ref !== null) {
+    const o = ref as Record<string, unknown>
+    if (typeof o.$oid === 'string' && o.$oid.trim() !== '') return `User …${o.$oid.slice(-6)}`
+    const fn = o.fullName ?? o.name
+    if (typeof fn === 'string' && fn.trim() !== '') return fn.trim()
+    const em = o.email
+    if (typeof em === 'string' && em.trim() !== '') return em.trim()
+    if (o.user != null) return personRecordLabel(o.user)
+  }
+  return '—'
+}
+
+/** Employee / applicant column — tries `user`, then common alternate keys from the API. */
+function leaveEmployeeDisplayName(r: LeaveRequest): string {
+  const row = r as Record<string, unknown>
+  const fromUser = personRecordLabel(r.user)
+  if (fromUser !== '—') return fromUser
+  if (r.employee != null) return personRecordLabel(r.employee)
+  if (r.submittedBy != null) return personRecordLabel(r.submittedBy)
+  if (r.applicant != null) return personRecordLabel(r.applicant)
+  for (const flat of ['employeeName', 'userName', 'fullName', 'applicantName'] as const) {
+    const v = row[flat]
+    if (typeof v === 'string' && v.trim() !== '') return v.trim()
+  }
+  for (const key of ['employeeId', 'userId', 'employeeRef'] as const) {
+    const v = row[key]
+    if (v != null) {
+      const label = personRecordLabel(v)
+      if (label !== '—') return label
+    }
+  }
+  return '—'
+}
+
+function sortLeavesNewestFirst(leaves: LeaveRequest[]): LeaveRequest[] {
+  return [...leaves].sort((a, b) => {
+    const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
+    const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
+    return tb - ta
+  })
+}
+
+function isLeaveReviewOk(res: unknown): boolean {
+  if (res == null || typeof res !== 'object') return false
+  const r = res as Record<string, unknown>
+  if (r.success === false) return false
+  if (r.success === true) return true
+  if (typeof r._httpStatus === 'number' && r._httpStatus >= 200 && r._httpStatus < 300) return true
+  return false
+}
+
+/**
+ * Show leave boundaries as calendar dates (avoids "previous day" for `…T00:00:00.000Z`).
+ * Accepts `YYYY-MM-DD` or ISO datetimes from the API.
+ */
+function formatLeaveDate(value: string | undefined): string {
+  if (value == null || String(value).trim() === '') return '—'
+  const s = value.trim()
+  try {
+    const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (ymd) {
+      const datePart = `${ymd[1]}-${ymd[2]}-${ymd[3]}`
+      const d = new Date(`${datePart}T12:00:00`)
+      if (!Number.isNaN(d.getTime())) {
+        return d.toLocaleDateString(undefined, { dateStyle: 'medium' })
+      }
+    }
+    const d = new Date(s)
+    if (!Number.isNaN(d.getTime())) {
+      return d.toLocaleDateString(undefined, { dateStyle: 'medium' })
+    }
+    return s
+  } catch {
+    return s
+  }
 }
 
 function reviewerLabel(r: LeaveRequest): string {
   if (isLeavePending(r.status)) return '—'
   if (r.reviewedByCompany) return 'Company account'
-  if (r.reviewedBy && typeof r.reviewedBy === 'object' && 'fullName' in r.reviewedBy) {
-    return (r.reviewedBy as { fullName: string }).fullName
-  }
+  const byUser = personRecordLabel(r.reviewedBy)
+  if (byUser !== '—') return byUser
   if (r.reviewedBy) return 'User reviewer'
   return '—'
 }
@@ -39,10 +119,10 @@ export function LeavePage(): React.ReactElement {
   const { user, accountType } = useAuth()
   const isCompany = accountType === 'company'
   const isUser = accountType === 'user'
-  const isAdminOrManager = user?.role === 'Admin' || user?.role === 'Manager'
+  const isAdminOrManager = isUser && isAdminOrManagerRole(user?.role)
 
-  /** Company or Admin/Manager user: approve/reject + all-leaves for this company */
-  const canManageTeamLeaves = isCompany || (isUser && isAdminOrManager)
+  /** Company JWT or Admin/Manager user: full list + approve/reject (PATCH /update-leave/:id). */
+  const canManageTeamLeaves = isCompany || isAdminOrManager
   /** Only user accounts (not company) may call my-leaves / submit-leave */
   const canUseEmployeeLeave = isUser && !!user
 
@@ -61,26 +141,22 @@ export function LeavePage(): React.ReactElement {
     setLoading(true)
 
     const applyMy = (res: Awaited<ReturnType<typeof leaveApi.myLeaves>>) => {
-      if (res.success && res.data) {
-        const d = res.data as { leaves?: LeaveRequest[] }
-        setMyLeaves(d.leaves ?? [])
+      if (isLeavesListOk(res)) {
+        setMyLeaves(sortLeavesNewestFirst(parseLeavesFromResponse(res)))
       } else {
         setMyLeaves([])
-        if (!res.success && res.message) {
-          addToast(res.message, 'error')
-        }
+        const err = res as { success?: boolean; message?: string }
+        if (err.success === false && err.message) addToast(err.message, 'error')
       }
     }
 
     const applyAll = (res: Awaited<ReturnType<typeof leaveApi.allLeaves>>) => {
-      if (res.success && res.data) {
-        const d = res.data as { leaves?: LeaveRequest[] }
-        setAllLeaves(d.leaves ?? [])
+      if (isLeavesListOk(res)) {
+        setAllLeaves(sortLeavesNewestFirst(parseLeavesFromResponse(res)))
       } else {
         setAllLeaves([])
-        if (!res.success && res.message) {
-          addToast(res.message, 'error')
-        }
+        const err = res as { success?: boolean; message?: string }
+        if (err.success === false && err.message) addToast(err.message, 'error')
       }
     }
 
@@ -95,7 +171,7 @@ export function LeavePage(): React.ReactElement {
       return
     }
 
-    if (isUser && isAdminOrManager) {
+    if (isAdminOrManager) {
       Promise.all([leaveApi.myLeaves(), leaveApi.allLeaves()])
         .then(([myRes, allRes]) => {
           applyMy(myRes)
@@ -151,11 +227,11 @@ export function LeavePage(): React.ReactElement {
 
   function handleApproveReject(id: string, status: LeaveReviewStatus): void {
     leaveApi.update(id, { status }).then((res) => {
-      if (res.success) {
-        addToast(`Leave ${status}.`)
+      if (isLeaveReviewOk(res)) {
+        addToast(status === 'Approved' ? 'Leave approved.' : 'Leave rejected.')
         load()
       } else {
-        addToast((res as { message: string }).message ?? 'Failed', 'error')
+        addToast((res as { message?: string }).message ?? 'Failed to update leave', 'error')
       }
     })
   }
@@ -166,8 +242,13 @@ export function LeavePage(): React.ReactElement {
       header: 'Type',
       render: (r: LeaveRequest) => (r.leaveType ? r.leaveType.replace(/-/g, ' ') : '—'),
     },
-    { key: 'startDate', header: 'Start', render: (r: LeaveRequest) => r.startDate },
-    { key: 'endDate', header: 'End', render: (r: LeaveRequest) => r.endDate },
+    { key: 'startDate', header: 'Start', render: (r: LeaveRequest) => formatLeaveDate(r.startDate) },
+    { key: 'endDate', header: 'End', render: (r: LeaveRequest) => formatLeaveDate(r.endDate) },
+    {
+      key: 'reason',
+      header: 'Reason',
+      render: (r: LeaveRequest) => (r.reason?.trim() ? r.reason : '—'),
+    },
     {
       key: 'status',
       header: 'Status',
@@ -184,7 +265,7 @@ export function LeavePage(): React.ReactElement {
   const myTableColumns = [...sharedColumns, reviewerColumn]
 
   const teamTableColumns = [
-    { key: 'user', header: 'Employee', render: (r: LeaveRequest) => userName(r) },
+    { key: 'user', header: 'Employee', render: (r: LeaveRequest) => leaveEmployeeDisplayName(r) },
     ...sharedColumns,
     reviewerColumn,
     ...(canManageTeamLeaves
@@ -228,7 +309,7 @@ export function LeavePage(): React.ReactElement {
         </Card>
       ) : (
         <>
-          {isUser && isAdminOrManager && (
+          {isAdminOrManager && (
             <section className="min-w-0 space-y-3">
               <h2 className="font-display text-lg font-semibold text-[var(--app-text)]">My leave</h2>
               <Card className="min-w-0 overflow-hidden p-0">
@@ -245,8 +326,13 @@ export function LeavePage(): React.ReactElement {
           {canManageTeamLeaves && (
             <section className="min-w-0 space-y-3">
               <h2 className="font-display text-lg font-semibold text-[var(--app-text)]">
-                {isCompany ? 'All leave requests' : 'Team leave (approve / reject)'}
+                {isCompany ? 'All leave requests' : 'Team leave requests'}
               </h2>
+              <p className="font-body text-sm text-[var(--app-muted)]">
+                {isCompany
+                  ? 'Review and approve or reject leave for everyone in your company.'
+                  : 'Approve or reject pending requests from employees in your company.'}
+              </p>
               <Card className="min-w-0 overflow-hidden p-0">
                 <DataTable<LeaveRequest>
                   columns={teamTableColumns}

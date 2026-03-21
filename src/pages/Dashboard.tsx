@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Users, CheckSquare, Calendar, Clock } from 'lucide-react'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { motion } from 'framer-motion'
-import { dashboard as dashboardApi } from '@/api/client'
+import { dashboard as dashboardApi, leave as leaveApi, users as usersApi } from '@/api/client'
+import { isLeavesListOk, parseLeavesFromResponse } from '@/lib/leaveListParse'
+import { isLeavePending } from '@/lib/leaveStatus'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useAuth } from '@/context/AuthContext'
 import type { DashboardData } from '@/types/api'
@@ -26,9 +28,59 @@ function friendlyDashboardError(raw: string | undefined): string {
   return msg || 'Failed to load dashboard.'
 }
 
+/**
+ * Headcount for the stat card: everyone with a user login (Admin, Manager, Employee).
+ * Excludes the company account. Prefer API field `totalTeamMembers`; fall back to legacy names.
+ */
+function teamMemberCount(d: DashboardData | null | undefined): number {
+  if (d == null) return 0
+  const v = d.totalTeamMembers ?? d.totalUsers ?? d.totalEmployees
+  return typeof v === 'number' && !Number.isNaN(v) ? v : 0
+}
+
+/**
+ * GET /all-users returns `totalUsers` for everyone in the tenant (all roles).
+ * Prefer this over dashboard aggregates — some backends only count `Employee` in totalEmployees.
+ */
+function parseDirectoryTotalUsers(res: unknown): number | null {
+  if (res == null || typeof res !== 'object') return null
+  const r = res as Record<string, unknown>
+  if (r.success === false) return null
+  const raw = r.data !== undefined && r.data !== null ? r.data : r
+  if (raw == null || typeof raw !== 'object') return null
+  const t = (raw as Record<string, unknown>).totalUsers
+  if (typeof t === 'number' && !Number.isNaN(t)) return t
+  return null
+}
+
+/**
+ * Fallback when GET /all-leaves is unavailable — uses dashboard aggregates (can be stale vs real list).
+ */
+function pendingLeaveQueueCount(d: DashboardData | null | undefined): number {
+  if (d == null) return 0
+  if (typeof d.totalPendingLeaves === 'number' && !Number.isNaN(d.totalPendingLeaves)) {
+    return d.totalPendingLeaves
+  }
+  const rows = d.leavesByStatus
+  if (Array.isArray(rows) && rows.length > 0) {
+    let pending = 0
+    for (const row of rows) {
+      const key = String(row._id ?? '').trim().toLowerCase()
+      if (key === 'pending') pending += Number(row.count) || 0
+    }
+    return pending
+  }
+  return d.totalLeaves ?? 0
+}
+
 export function DashboardPage(): React.ReactElement {
   const { accountType, user } = useAuth()
+  const location = useLocation()
   const [data, setData] = useState<DashboardData | null>(null)
+  /** Authoritative headcount from GET /all-users when available */
+  const [directoryUserTotal, setDirectoryUserTotal] = useState<number | null>(null)
+  /** Live pending count from GET /all-leaves (matches Leave page after approve/reject). */
+  const [pendingLeaveFromList, setPendingLeaveFromList] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,16 +95,34 @@ export function DashboardPage(): React.ReactElement {
       queueMicrotask(() => setLoading(false))
       return
     }
-    queueMicrotask(() => setError(null))
-    dashboardApi
-      .get()
-      .then((res) => {
-        if (res.success && res.data) setData(res.data)
-        else setError(friendlyDashboardError((res as { message?: string }).message))
-      })
-      .catch(() => setError(friendlyDashboardError(undefined)))
-      .finally(() => setLoading(false))
-  }, [canSeeDashboard])
+    queueMicrotask(() => {
+      setLoading(true)
+      setError(null)
+      setDirectoryUserTotal(null)
+      setPendingLeaveFromList(null)
+      void Promise.all([
+        dashboardApi.get(),
+        usersApi.all({ page: 1, limit: 1 }),
+        leaveApi.allLeaves(),
+      ])
+        .then(([dashRes, usersRes, leaveRes]) => {
+          const n = parseDirectoryTotalUsers(usersRes)
+          if (n != null) setDirectoryUserTotal(n)
+          if (isLeavesListOk(leaveRes)) {
+            const leaves = parseLeavesFromResponse(leaveRes)
+            const pending = leaves.filter((row) => isLeavePending(row.status)).length
+            setPendingLeaveFromList(pending)
+          } else {
+            setPendingLeaveFromList(null)
+          }
+          if (dashRes.success && dashRes.data) setData(dashRes.data)
+          else setError(friendlyDashboardError((dashRes as { message?: string }).message))
+        })
+        .catch(() => setError(friendlyDashboardError(undefined)))
+        .finally(() => setLoading(false))
+    })
+    /** Refetch when returning to this page (e.g. after approving leave on /leave). */
+  }, [canSeeDashboard, location.key])
 
   if (!canSeeDashboard) {
     return (
@@ -91,10 +161,22 @@ export function DashboardPage(): React.ReactElement {
     )
   }
 
+  const teamMembersDisplayed = directoryUserTotal ?? teamMemberCount(data)
+  const pendingLeaveDisplayed =
+    pendingLeaveFromList !== null ? pendingLeaveFromList : pendingLeaveQueueCount(data)
+
   const totals = [
-    { label: 'Employees', value: data?.totalEmployees ?? 0, icon: <Users className="h-5 w-5" /> },
+    {
+      label: 'Team members',
+      value: teamMembersDisplayed,
+      icon: <Users className="h-5 w-5" />,
+    },
     { label: 'Tasks', value: data?.totalTasks ?? 0, icon: <CheckSquare className="h-5 w-5" /> },
-    { label: 'Leave requests', value: data?.totalLeaves ?? 0, icon: <Calendar className="h-5 w-5" /> },
+    {
+      label: 'Pending leave',
+      value: pendingLeaveDisplayed,
+      icon: <Calendar className="h-5 w-5" />,
+    },
     { label: "Today's attendance", value: data?.todayAttendance ?? 0, icon: <Clock className="h-5 w-5" /> },
   ]
 
@@ -163,7 +245,7 @@ export function DashboardPage(): React.ReactElement {
         </Card>
 
         <Card className="min-w-0 overflow-hidden p-4 sm:p-5">
-          <CardTitle className="mb-3 sm:mb-4">Leave status</CardTitle>
+          <CardTitle className="mb-3 sm:mb-4">Leave by status</CardTitle>
           <div className="h-[220px] w-full min-w-0 sm:h-[240px]" style={{ minHeight: 220 }}>
             {leaveChartData.length === 0 ? (
               <div className="flex h-full items-center justify-center font-body text-sm text-[var(--app-muted)]">

@@ -103,6 +103,10 @@ export type LeaveReviewStatus = 'Approved' | 'Rejected';
 export type LeaveRequest = {
   _id: string;
   user: string | User;
+  /** Some APIs populate this instead of or in addition to `user` */
+  employee?: string | User;
+  submittedBy?: string | User;
+  applicant?: string | User;
   companyId?: string;
   startDate: string;
   endDate: string;
@@ -125,9 +129,18 @@ export type UpdateLeaveBody = { status: LeaveReviewStatus };
 
 // Dashboard
 export type DashboardData = {
+  /**
+   * All user accounts in the tenant (Admin + Manager + Employee). Excludes the company login entity.
+   * Prefer this over `totalEmployees` when the API provides it.
+   */
+  totalTeamMembers?: number;
+  /** Legacy / alias — should match team size (users only, not company account). */
   totalEmployees?: number;
+  totalUsers?: number;
   totalTasks?: number;
   totalLeaves?: number;
+  /** Pending leave count only (preferred for "action queue" card). */
+  totalPendingLeaves?: number;
   todayAttendance?: number;
   tasksByStatus?: { _id: TaskStatus; count: number }[];
   leavesByStatus?: { _id: LeaveStatus; count: number }[];
@@ -135,6 +148,8 @@ export type DashboardData = {
 
 // Add user (company or Admin/Manager)
 export type AddUserBody = { fullName: string; email: string; password: string; role?: Role };
+/** PATCH update-user-role/:userId — company JWT or Admin/Manager */
+export type UpdateUserRoleBody = { role: Role };
 
 // Paginated
 export type PaginatedUsers = { users: User[]; totalUsers: number };

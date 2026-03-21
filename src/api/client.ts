@@ -167,6 +167,23 @@ export const users = {
       body: form,
     });
   },
+  /**
+   * Change a user’s role (tenant-scoped). **Company JWT** or **Admin/Manager** user.
+   * Backend route (expected): `PATCH /update-user-role/:userId` body `{ role }`.
+   */
+  updateRole: (userId: string, body: import('../types/api').UpdateUserRoleBody) =>
+    apiRequest<unknown>(`/api/v1/users/update-user-role/${encodeURIComponent(userId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  /**
+   * Remove a user from the company. **Company JWT** or **Admin/Manager** user.
+   * Backend route (expected): `DELETE /delete-user/:userId`.
+   */
+  deleteUser: (userId: string) =>
+    apiRequest<unknown>(`/api/v1/users/delete-user/${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+    }),
 };
 
 // Company (company account only)
