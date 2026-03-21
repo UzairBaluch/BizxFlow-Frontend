@@ -221,9 +221,8 @@ export const leave = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-  // Approve/reject: if your backend has this, set the path (e.g. PATCH /api/v1/users/leave/:id)
-  update: (id: string, body: import('../types/api').UpdateLeaveBody) =>
-    apiRequest<unknown>(`/api/v1/users/leave/${id}`, {
+  update: (leaveId: string, body: import('../types/api').UpdateLeaveBody) =>
+    apiRequest<unknown>(`/api/v1/users/update-leave/${leaveId}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),

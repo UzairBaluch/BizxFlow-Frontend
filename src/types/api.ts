@@ -82,13 +82,24 @@ export type LeaveStatus = 'pending' | 'approved' | 'rejected';
 export type LeaveRequest = {
   _id: string;
   user: string | User;
+  companyId?: string;
+  startDate: string;
+  endDate: string;
+  leaveType?: string;
+  reason?: string;
+  status: LeaveStatus;
+  /** Set when a user (Admin/Manager) approved/rejected */
+  reviewedBy?: string | User | null;
+  /** Set when the company account approved/rejected */
+  reviewedByCompany?: string | Company | null;
+  createdAt?: string;
+};
+export type SubmitLeaveBody = {
+  leaveType: string;
   startDate: string;
   endDate: string;
   reason?: string;
-  status: LeaveStatus;
-  createdAt?: string;
 };
-export type SubmitLeaveBody = { startDate: string; endDate: string; reason?: string };
 export type UpdateLeaveBody = { status: LeaveStatus };
 
 // Dashboard

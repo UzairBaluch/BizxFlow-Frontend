@@ -10,12 +10,14 @@ export interface Leave {
   user: string | { _id: string; fullName: string }
   startDate: string
   endDate: string
+  leaveType?: string
   reason?: string
   status: LeaveStatus
   createdAt?: string
 }
 
 export interface ApplyLeavePayload {
+  leaveType: string
   startDate: string
   endDate: string
   reason?: string

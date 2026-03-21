@@ -11,13 +11,47 @@ import { DataTable } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SlidePanel } from '@/components/ui/SlidePanel'
 
+const LEAVE_TYPES = [
+  { value: 'annual', label: 'Annual' },
+  { value: 'sick', label: 'Sick' },
+  { value: 'casual', label: 'Casual' },
+  { value: 'unpaid', label: 'Unpaid' },
+  { value: 'other', label: 'Other' },
+] as const
+
+function userName(r: LeaveRequest): string {
+  if (typeof r.user === 'object' && r.user && 'fullName' in r.user) {
+    return (r.user as { fullName: string }).fullName
+  }
+  return String(r.user)
+}
+
+function reviewerLabel(r: LeaveRequest): string {
+  if (r.status === 'pending') return '—'
+  if (r.reviewedByCompany) return 'Company account'
+  if (r.reviewedBy && typeof r.reviewedBy === 'object' && 'fullName' in r.reviewedBy) {
+    return (r.reviewedBy as { fullName: string }).fullName
+  }
+  if (r.reviewedBy) return 'User reviewer'
+  return '—'
+}
+
 export function LeavePage(): React.ReactElement {
-  const { user } = useAuth()
+  const { user, accountType } = useAuth()
+  const isCompany = accountType === 'company'
+  const isUser = accountType === 'user'
   const isAdminOrManager = user?.role === 'Admin' || user?.role === 'Manager'
+
+  /** Company or Admin/Manager user: approve/reject + all-leaves for this company */
+  const canManageTeamLeaves = isCompany || (isUser && isAdminOrManager)
+  /** Only user accounts (not company) may call my-leaves / submit-leave */
+  const canUseEmployeeLeave = isUser && !!user
+
   const [myLeaves, setMyLeaves] = useState<LeaveRequest[]>([])
   const [allLeaves, setAllLeaves] = useState<LeaveRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [panelOpen, setPanelOpen] = useState(false)
+  const [leaveType, setLeaveType] = useState<string>(LEAVE_TYPES[0].value)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [reason, setReason] = useState('')
@@ -26,22 +60,67 @@ export function LeavePage(): React.ReactElement {
 
   const load = useCallback(() => {
     setLoading(true)
-    Promise.all([
-      leaveApi.myLeaves(),
-      isAdminOrManager ? leaveApi.allLeaves() : Promise.resolve({ success: true, data: {} }),
-    ])
-      .then(([myRes, allRes]) => {
-        if (myRes.success && myRes.data) {
-          const d = myRes.data as { leaves?: LeaveRequest[] }
-          setMyLeaves(d.leaves ?? [])
+
+    const applyMy = (res: Awaited<ReturnType<typeof leaveApi.myLeaves>>) => {
+      if (res.success && res.data) {
+        const d = res.data as { leaves?: LeaveRequest[] }
+        setMyLeaves(d.leaves ?? [])
+      } else {
+        setMyLeaves([])
+        if (!res.success && res.message) {
+          addToast(res.message, 'error')
         }
-        if (isAdminOrManager && allRes.success && allRes.data) {
-          const d = allRes.data as { leaves?: LeaveRequest[] }
-          setAllLeaves(d.leaves ?? [])
+      }
+    }
+
+    const applyAll = (res: Awaited<ReturnType<typeof leaveApi.allLeaves>>) => {
+      if (res.success && res.data) {
+        const d = res.data as { leaves?: LeaveRequest[] }
+        setAllLeaves(d.leaves ?? [])
+      } else {
+        setAllLeaves([])
+        if (!res.success && res.message) {
+          addToast(res.message, 'error')
         }
-      })
-      .finally(() => setLoading(false))
-  }, [isAdminOrManager])
+      }
+    }
+
+    if (isCompany) {
+      leaveApi
+        .allLeaves()
+        .then(applyAll)
+        .finally(() => {
+          setMyLeaves([])
+          setLoading(false)
+        })
+      return
+    }
+
+    if (isUser && isAdminOrManager) {
+      Promise.all([leaveApi.myLeaves(), leaveApi.allLeaves()])
+        .then(([myRes, allRes]) => {
+          applyMy(myRes)
+          applyAll(allRes)
+        })
+        .finally(() => setLoading(false))
+      return
+    }
+
+    if (isUser) {
+      leaveApi
+        .myLeaves()
+        .then(applyMy)
+        .finally(() => {
+          setAllLeaves([])
+          setLoading(false)
+        })
+      return
+    }
+
+    setMyLeaves([])
+    setAllLeaves([])
+    setLoading(false)
+  }, [isCompany, isUser, isAdminOrManager, addToast])
 
   useEffect(() => {
     load()
@@ -49,16 +128,17 @@ export function LeavePage(): React.ReactElement {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>): void {
     e.preventDefault()
-    if (!startDate || !endDate) return
+    if (!startDate || !endDate || !leaveType) return
     setSubmitting(true)
     leaveApi
-      .submit({ startDate, endDate, reason: reason || undefined })
+      .submit({ leaveType, startDate, endDate, reason: reason || undefined })
       .then((res) => {
         if (res.success) {
           addToast('Leave submitted.')
           setStartDate('')
           setEndDate('')
           setReason('')
+          setLeaveType(LEAVE_TYPES[0].value)
           setPanelOpen(false)
           load()
         } else {
@@ -79,65 +159,151 @@ export function LeavePage(): React.ReactElement {
     })
   }
 
-  const displayList = isAdminOrManager ? allLeaves : myLeaves
-  const userName = (r: LeaveRequest): string =>
-    typeof r.user === 'object' && r.user && 'fullName' in r.user
-      ? (r.user as { fullName: string }).fullName
-      : String(r.user)
+  const sharedColumns = [
+    {
+      key: 'leaveType',
+      header: 'Type',
+      render: (r: LeaveRequest) => (r.leaveType ? r.leaveType.replace(/-/g, ' ') : '—'),
+    },
+    { key: 'startDate', header: 'Start', render: (r: LeaveRequest) => r.startDate },
+    { key: 'endDate', header: 'End', render: (r: LeaveRequest) => r.endDate },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (r: LeaveRequest) => <StatusBadge status={r.status} />,
+    },
+  ] as const
+
+  const reviewerColumn = {
+    key: 'reviewedBy',
+    header: 'Reviewed by',
+    render: (r: LeaveRequest) => reviewerLabel(r),
+  }
+
+  const myTableColumns = [...sharedColumns, reviewerColumn]
+
+  const teamTableColumns = [
+    { key: 'user', header: 'Employee', render: (r: LeaveRequest) => userName(r) },
+    ...sharedColumns,
+    reviewerColumn,
+    ...(canManageTeamLeaves
+      ? [
+          {
+            key: '_actions',
+            header: 'Actions',
+            render: (r: LeaveRequest) =>
+              r.status === 'pending' ? (
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="primary" onClick={() => handleApproveReject(r._id, LeaveStatus.Approved)}>
+                    Approve
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => handleApproveReject(r._id, LeaveStatus.Rejected)}>
+                    Reject
+                  </Button>
+                </div>
+              ) : (
+                '—'
+              ),
+          },
+        ]
+      : []),
+  ]
 
   return (
     <div className="space-y-7">
+      {isCompany && (
+        <Card className="border-[var(--app-border)] bg-[var(--app-card)] p-4">
+          <p className="font-body text-sm text-[var(--app-text)]">
+            You’re signed in as the <span className="font-semibold">company</span> account. Review and approve leave for your organization below.{' '}
+            <span className="text-[var(--app-muted)]">
+              To submit your own leave request, sign in with an employee user account.
+            </span>
+          </p>
+        </Card>
+      )}
+
       <div className="flex justify-end">
-        {!isAdminOrManager && (
+        {canUseEmployeeLeave && (
           <Button variant="primary" onClick={() => setPanelOpen(true)}>
-            Apply Leave
+            Apply leave
           </Button>
         )}
       </div>
 
-      <Card className="overflow-hidden p-0">
-        {loading ? (
+      {loading ? (
+        <Card className="overflow-hidden p-0">
           <div className="flex justify-center py-24">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--app-border)] border-t-[var(--app-text)]" />
           </div>
-        ) : (
-          <DataTable<LeaveRequest>
-            columns={[
-              { key: 'user', header: 'User', render: (r) => userName(r) },
-              { key: 'startDate', header: 'Start', render: (r) => r.startDate },
-              { key: 'endDate', header: 'End', render: (r) => r.endDate },
-              { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
-              ...(isAdminOrManager
-                ? [
-                    {
-                      key: '_id',
-                      header: 'Actions',
-                      render: (r: LeaveRequest) =>
-                        r.status === 'pending' ? (
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="primary" onClick={() => handleApproveReject(r._id, LeaveStatus.Approved)}>
-                              Approve
-                            </Button>
-                            <Button size="sm" variant="secondary" onClick={() => handleApproveReject(r._id, LeaveStatus.Rejected)}>
-                              Reject
-                            </Button>
-                          </div>
-                        ) : (
-                          '—'
-                        ),
-                    },
-                  ]
-                : []),
-            ]}
-            data={displayList}
-            keyExtractor={(r) => r._id}
-            emptyMessage="No leave requests"
-          />
-        )}
-      </Card>
+        </Card>
+      ) : (
+        <>
+          {isUser && isAdminOrManager && (
+            <section className="space-y-3">
+              <h2 className="font-display text-lg font-semibold text-[var(--app-text)]">My leave</h2>
+              <Card className="overflow-hidden p-0">
+                <DataTable<LeaveRequest>
+                  columns={myTableColumns}
+                  data={myLeaves}
+                  keyExtractor={(r) => r._id}
+                  emptyMessage="No leave requests"
+                />
+              </Card>
+            </section>
+          )}
+
+          {canManageTeamLeaves && (
+            <section className="space-y-3">
+              <h2 className="font-display text-lg font-semibold text-[var(--app-text)]">
+                {isCompany ? 'All leave requests' : 'Team leave (approve / reject)'}
+              </h2>
+              <Card className="overflow-hidden p-0">
+                <DataTable<LeaveRequest>
+                  columns={teamTableColumns}
+                  data={allLeaves}
+                  keyExtractor={(r) => r._id}
+                  emptyMessage="No leave requests"
+                />
+              </Card>
+            </section>
+          )}
+
+          {isUser && !isAdminOrManager && (
+            <Card className="overflow-hidden p-0">
+              <DataTable<LeaveRequest>
+                columns={myTableColumns}
+                data={myLeaves}
+                keyExtractor={(r) => r._id}
+                emptyMessage="No leave requests"
+              />
+            </Card>
+          )}
+        </>
+      )}
 
       <SlidePanel open={panelOpen} onClose={() => setPanelOpen(false)} title="Apply for leave">
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="w-full">
+            <label
+              htmlFor="leave-type"
+              className="mb-1.5 block font-body text-xs font-medium uppercase tracking-wider text-[var(--app-muted)]"
+            >
+              Leave type
+            </label>
+            <select
+              id="leave-type"
+              required
+              value={leaveType}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setLeaveType(e.target.value)}
+              className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] px-3 py-2.5 font-body text-sm text-[var(--app-text)] outline-none transition focus:border-[var(--app-text)]"
+            >
+              {LEAVE_TYPES.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <Input
             label="Start date"
             type="date"
