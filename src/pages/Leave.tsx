@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { leave as leaveApi } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
-import type { LeaveRequest } from '@/types/api'
-import { LeaveStatus } from '@/types/leave.types'
+import type { LeaveRequest, LeaveReviewStatus, LeaveTypeSubmit } from '@/types/api'
+import { displayLeaveStatus, isLeavePending } from '@/lib/leaveStatus'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -11,13 +11,12 @@ import { DataTable } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SlidePanel } from '@/components/ui/SlidePanel'
 
-const LEAVE_TYPES = [
-  { value: 'annual', label: 'Annual' },
-  { value: 'sick', label: 'Sick' },
-  { value: 'casual', label: 'Casual' },
-  { value: 'unpaid', label: 'Unpaid' },
-  { value: 'other', label: 'Other' },
-] as const
+/** POST /submit-leave — API enum */
+const LEAVE_TYPES: { value: LeaveTypeSubmit; label: string }[] = [
+  { value: 'Annual', label: 'Annual' },
+  { value: 'Sick', label: 'Sick' },
+  { value: 'Casual', label: 'Casual' },
+]
 
 function userName(r: LeaveRequest): string {
   if (typeof r.user === 'object' && r.user && 'fullName' in r.user) {
@@ -27,7 +26,7 @@ function userName(r: LeaveRequest): string {
 }
 
 function reviewerLabel(r: LeaveRequest): string {
-  if (r.status === 'pending') return '—'
+  if (isLeavePending(r.status)) return '—'
   if (r.reviewedByCompany) return 'Company account'
   if (r.reviewedBy && typeof r.reviewedBy === 'object' && 'fullName' in r.reviewedBy) {
     return (r.reviewedBy as { fullName: string }).fullName
@@ -51,7 +50,7 @@ export function LeavePage(): React.ReactElement {
   const [allLeaves, setAllLeaves] = useState<LeaveRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [panelOpen, setPanelOpen] = useState(false)
-  const [leaveType, setLeaveType] = useState<string>(LEAVE_TYPES[0].value)
+  const [leaveType, setLeaveType] = useState<LeaveTypeSubmit>(LEAVE_TYPES[0].value)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [reason, setReason] = useState('')
@@ -123,7 +122,9 @@ export function LeavePage(): React.ReactElement {
   }, [isCompany, isUser, isAdminOrManager, addToast])
 
   useEffect(() => {
-    load()
+    queueMicrotask(() => {
+      void load()
+    })
   }, [load])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>): void {
@@ -148,7 +149,7 @@ export function LeavePage(): React.ReactElement {
       .finally(() => setSubmitting(false))
   }
 
-  function handleApproveReject(id: string, status: LeaveStatus): void {
+  function handleApproveReject(id: string, status: LeaveReviewStatus): void {
     leaveApi.update(id, { status }).then((res) => {
       if (res.success) {
         addToast(`Leave ${status}.`)
@@ -170,7 +171,7 @@ export function LeavePage(): React.ReactElement {
     {
       key: 'status',
       header: 'Status',
-      render: (r: LeaveRequest) => <StatusBadge status={r.status} />,
+      render: (r: LeaveRequest) => <StatusBadge status={displayLeaveStatus(r.status)} />,
     },
   ] as const
 
@@ -192,12 +193,12 @@ export function LeavePage(): React.ReactElement {
             key: '_actions',
             header: 'Actions',
             render: (r: LeaveRequest) =>
-              r.status === 'pending' ? (
+              isLeavePending(r.status) ? (
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="primary" onClick={() => handleApproveReject(r._id, LeaveStatus.Approved)}>
+                  <Button size="sm" variant="primary" onClick={() => handleApproveReject(r._id, 'Approved')}>
                     Approve
                   </Button>
-                  <Button size="sm" variant="secondary" onClick={() => handleApproveReject(r._id, LeaveStatus.Rejected)}>
+                  <Button size="sm" variant="secondary" onClick={() => handleApproveReject(r._id, 'Rejected')}>
                     Reject
                   </Button>
                 </div>
@@ -211,17 +212,6 @@ export function LeavePage(): React.ReactElement {
 
   return (
     <div className="min-w-0 space-y-6 sm:space-y-7">
-      {isCompany && (
-        <Card className="min-w-0 border-[var(--app-border)] bg-[var(--app-card)] p-4">
-          <p className="max-w-full font-body text-sm leading-relaxed text-pretty text-[var(--app-text)] break-words">
-            You’re signed in as the <span className="font-semibold">company</span> account. Review and approve leave for your organization below.{' '}
-            <span className="text-[var(--app-muted)]">
-              To submit your own leave request, sign in with an employee user account.
-            </span>
-          </p>
-        </Card>
-      )}
-
       <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:justify-end">
         {canUseEmployeeLeave && (
           <Button variant="primary" className="w-full shrink-0 sm:w-auto" onClick={() => setPanelOpen(true)}>
@@ -294,7 +284,7 @@ export function LeavePage(): React.ReactElement {
               id="leave-type"
               required
               value={leaveType}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setLeaveType(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setLeaveType(e.target.value as LeaveTypeSubmit)}
               className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] px-3 py-2.5 font-body text-sm text-[var(--app-text)] outline-none transition focus:border-[var(--app-text)]"
             >
               {LEAVE_TYPES.map((opt) => (

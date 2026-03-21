@@ -1,6 +1,6 @@
 /**
  * API client for BizxFlow backend.
- * Auth model: see docs/AUTH_MODEL.md (company vs user accounts, register, login, all-users, add-user).
+ * Routes: `/api/v1/users/...` — see `docs/API_INTEGRATION.md` and live `/api-docs` on the API host.
  */
 import type { ApiResponse } from '../types/api';
 
@@ -19,6 +19,7 @@ export async function apiRequest<T>(
   const headers: HeadersInit = {
     ...(init.headers as Record<string, string>),
   };
+  (headers as Record<string, string>)['Accept'] = 'application/json';
   if (!(init.body instanceof FormData)) {
     (headers as Record<string, string>)['Content-Type'] = 'application/json';
   }
@@ -31,7 +32,10 @@ export async function apiRequest<T>(
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
     const rawMessage =
-      json.message ?? json.error ?? json.msg ?? (Array.isArray(json.errors) && json.errors[0]?.message ? json.errors[0].message : null);
+      json.message ??
+      json.error ??
+      json.msg ??
+      (Array.isArray(json.errors) && json.errors[0]?.message ? json.errors[0].message : null);
     const message =
       typeof rawMessage === 'string'
         ? rawMessage
@@ -44,7 +48,10 @@ export async function apiRequest<T>(
       status: res.status,
     };
   }
-  return json as ApiResponse<T>;
+  /** Lets callers treat 201/200 + minimal body as success (e.g. POST create with message-only JSON). */
+  const body =
+    json != null && typeof json === 'object' && !Array.isArray(json) ? { ...(json as object) } : {};
+  return { ...body, _httpStatus: res.status } as ApiResponse<T>;
 }
 
 // Auth (BizxFlow: company-based, under /api/v1/users/)
@@ -88,11 +95,18 @@ export const auth = {
       body: JSON.stringify({ email }),
       token: null,
     }),
-  /** Set new password using token from reset email. */
+  /** Set new password; token is in the path per API spec. */
   resetPassword: (token: string, newPassword: string) =>
-    apiRequest<unknown>('/api/v1/users/reset-password', {
+    apiRequest<unknown>(`/api/v1/users/reset-password/${encodeURIComponent(token)}`, {
       method: 'POST',
-      body: JSON.stringify({ token, newPassword }),
+      body: JSON.stringify({ newPassword }),
+      token: null,
+    }),
+  /** Optional body `{ refreshToken }` when not using httpOnly cookies. */
+  refreshToken: (body?: { refreshToken?: string }) =>
+    apiRequest<import('../types/api').AuthData>('/api/v1/users/refresh-token', {
+      method: 'POST',
+      body: JSON.stringify(body ?? {}),
       token: null,
     }),
   logout: () =>
@@ -180,14 +194,34 @@ export const attendance = {
     apiRequest<unknown>('/api/v1/users/checkIn', { method: 'POST', body: '{}' }),
   checkOut: () =>
     apiRequest<unknown>('/api/v1/users/checkOut', { method: 'POST', body: '{}' }),
-  myRecord: () =>
-    apiRequest<{ records?: import('../types/api').AttendanceRecord[] }>('/api/v1/users/check-record'),
-  allRecords: () =>
-    apiRequest<{ records?: import('../types/api').AttendanceRecord[] }>('/api/v1/users/record-all'),
+  /** User JWT — optional `from` / `to` (ISO date strings). */
+  myRecord: (params?: { from?: string; to?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.from) sp.set('from', params.from);
+    if (params?.to) sp.set('to', params.to);
+    const q = sp.toString();
+    return apiRequest<{ records?: import('../types/api').AttendanceRecord[] }>(
+      `/api/v1/users/check-record${q ? `?${q}` : ''}`
+    );
+  },
+  /** Company or Admin/Manager — optional `from` / `to`. */
+  allRecords: (params?: { from?: string; to?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.from) sp.set('from', params.from);
+    if (params?.to) sp.set('to', params.to);
+    const q = sp.toString();
+    return apiRequest<{ records?: import('../types/api').AttendanceRecord[] }>(
+      `/api/v1/users/record-all${q ? `?${q}` : ''}`
+    );
+  },
 };
 
 // Tasks
 export const tasks = {
+  /**
+   * Assignee-scoped list (OpenAPI: "My assigned tasks", user JWT).
+   * Admin/Manager see only tasks assigned to themselves unless backend also widens this route.
+   */
   list: (params?: { search?: string; page?: number; limit?: number }) => {
     const sp = new URLSearchParams();
     if (params?.search) sp.set('search', params.search);
@@ -198,14 +232,46 @@ export const tasks = {
       `/api/v1/users/tasks${q ? `?${q}` : ''}`
     );
   },
+  /**
+   * Company-wide task list (mirror `all-leaves`). **Company JWT** or **Admin/Manager**.
+   * Response `data`: `{ tasks, totalTasks, page, limit }` (ApiResponse wrapper).
+   * Optional `status`: Pending | In Progress | Done (case as backend expects).
+   */
+  all: (params?: {
+    search?: string;
+    page?: number;
+    limit?: number;
+    status?: import('../types/task.types').TaskStatus;
+  }) => {
+    const sp = new URLSearchParams();
+    if (params?.search) sp.set('search', params.search);
+    if (params?.page != null) sp.set('page', String(params.page));
+    if (params?.limit != null) sp.set('limit', String(params.limit));
+    if (params?.status) sp.set('status', params.status);
+    const q = sp.toString();
+    return apiRequest<import('../types/api').PaginatedTasks | { tasks: import('../types/api').Task[] }>(
+      `/api/v1/users/all-tasks${q ? `?${q}` : ''}`
+    );
+  },
   create: (body: import('../types/api').CreateTaskBody) =>
     apiRequest<{ task?: import('../types/api').Task }>('/api/v1/users/tasks', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+  /** Assignee only — JSON `{ status }`. */
   update: (id: string, body: import('../types/api').UpdateTaskBody) =>
     apiRequest<{ task?: import('../types/api').Task }>(`/api/v1/users/tasks/${id}`, {
       method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+};
+
+// Announcements
+export const announcements = {
+  list: () => apiRequest<unknown>('/api/v1/users/announcements'),
+  create: (body: import('../types/api').CreateAnnouncementBody) =>
+    apiRequest<unknown>('/api/v1/users/announcements', {
+      method: 'POST',
       body: JSON.stringify(body),
     }),
 };

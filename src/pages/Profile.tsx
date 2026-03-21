@@ -215,7 +215,7 @@ export function ProfilePage(): React.ReactElement {
             </button>
           </div>
           <p className="font-body text-xs text-[var(--app-muted)] sm:text-sm">
-            {user.fullName} · {user.role}
+            {user.fullName} · {user.role ?? '—'}
           </p>
         </div>
       </Card>

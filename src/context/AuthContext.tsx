@@ -47,13 +47,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setUser = useCallback((u: User | null) => setUserState(u), []);
   const setCompany = useCallback((c: Company | null) => setCompanyState(c), []);
 
+  /** Never keep both entities populated — avoids reading `user.role` on a company JWT session (stale user). */
   const applyAuth = useCallback((t: string, type: AccountType, u: User | null, c: Company | null) => {
     localStorage.setItem(STORAGE_KEY, t);
     localStorage.setItem(ACCOUNT_TYPE_KEY, type);
     setToken(t);
     setAccountTypeState(type);
-    setUserState(u);
-    setCompanyState(c);
+    if (type === 'company') {
+      setUserState(null);
+      setCompanyState(c);
+    } else {
+      setUserState(u);
+      setCompanyState(null);
+    }
   }, []);
 
   const fetchMe = useCallback(async () => {
@@ -87,13 +93,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAccountTypeState(type);
       localStorage.setItem(ACCOUNT_TYPE_KEY, type);
     }
-    setUserState(u ?? null);
-    setCompanyState(c ?? null);
+    if (type === 'company') {
+      setUserState(null);
+      setCompanyState(c ?? null);
+    } else if (type === 'user') {
+      setUserState(u ?? null);
+      setCompanyState(null);
+    } else {
+      setUserState(u ?? null);
+      setCompanyState(c ?? null);
+    }
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    fetchMe();
+    queueMicrotask(() => {
+      void fetchMe();
+    });
   }, [fetchMe]);
 
   const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {

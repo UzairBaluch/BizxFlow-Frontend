@@ -8,6 +8,8 @@ interface DataTableProps<T> {
   keyExtractor: (row: T) => string
   rowDelay?: number
   emptyMessage?: string
+  /** When true and there are no rows, header row is hidden (cleaner on mobile). */
+  hideHeaderWhenEmpty?: boolean
   className?: string
 }
 
@@ -17,30 +19,40 @@ export function DataTable<T extends Record<string, unknown>>({
   keyExtractor,
   rowDelay = 0.03,
   emptyMessage = 'No data',
+  hideHeaderWhenEmpty = false,
   className,
 }: DataTableProps<T>): React.ReactElement {
+  const hasRows = data.length > 0
+
   return (
     <div className={cn('w-full min-w-0 max-w-full overflow-x-auto', className)}>
-      {/* Narrow viewports: horizontal scroll inside wrapper instead of clipping columns */}
-      <table className="w-full min-w-[720px] border-collapse lg:min-w-full">
-        <thead>
-          <tr className="border-b border-[var(--app-border)]">
-            {columns.map((col) => (
-              <th
-                key={String(col.key)}
-                className="whitespace-nowrap px-3 py-2.5 text-left font-body text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--app-muted)] sm:px-4 sm:py-3"
-              >
-                {col.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
+      {/* With rows: min width enables horizontal scroll on mobile. Empty: full-width so colspan + text-center align to the card. */}
+      <table
+        className={cn(
+          'w-full border-collapse',
+          hasRows ? 'min-w-[720px] lg:min-w-full' : 'min-w-full'
+        )}
+      >
+        {(!hideHeaderWhenEmpty || hasRows) && (
+          <thead>
+            <tr className="border-b border-[var(--app-border)]">
+              {columns.map((col) => (
+                <th
+                  key={String(col.key)}
+                  className="whitespace-nowrap px-3 py-2.5 text-left font-body text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--app-muted)] sm:px-4 sm:py-3"
+                >
+                  {col.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+        )}
         <tbody>
-          {data.length === 0 ? (
+          {!hasRows ? (
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-3 py-8 text-center font-body text-sm text-[var(--app-muted)] sm:px-4"
+                className="px-4 py-14 text-center font-body text-sm text-[var(--app-muted)] sm:py-10 sm:text-base"
               >
                 {emptyMessage}
               </td>

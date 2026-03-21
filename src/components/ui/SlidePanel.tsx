@@ -13,13 +13,20 @@ export interface SlidePanelProps {
 export function SlidePanel({ open, onClose, title, children, className }: SlidePanelProps): React.ReactElement {
   return (
     <AnimatePresence>
-      {open && (
-        <>
+      {open ? (
+        <motion.div
+          key="slide-panel-root"
+          className="fixed inset-0 z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+        >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
             onClick={onClose}
             aria-hidden
           />
@@ -29,13 +36,14 @@ export function SlidePanel({ open, onClose, title, children, className }: SlideP
             exit={{ x: '100%' }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
             className={cn(
-              'fixed right-0 top-0 z-50 flex h-[100dvh] max-h-[100dvh] w-full max-w-[min(100vw,400px)] flex-col border-l border-[var(--app-border)] bg-[var(--app-card)] shadow-xl',
+              'absolute right-0 top-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-[min(100vw,400px)] flex-col border-l border-[var(--app-border)] bg-[var(--app-card)] shadow-xl',
               'pt-[max(1.25rem,env(safe-area-inset-top))] pr-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pl-5 sm:max-w-[400px]',
               className
             )}
             role="dialog"
             aria-modal="true"
             aria-labelledby="panel-title"
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex shrink-0 items-start justify-between gap-3">
               <h2
@@ -57,8 +65,8 @@ export function SlidePanel({ open, onClose, title, children, className }: SlideP
               {children}
             </div>
           </motion.aside>
-        </>
-      )}
+        </motion.div>
+      ) : null}
     </AnimatePresence>
   )
 }

@@ -39,7 +39,8 @@ export function UsersPage(): React.ReactElement {
       .all({ search: search || undefined, page, limit })
       .then((res) => {
         if (res.success && res.data) {
-          setList(res.data.users ?? [])
+          const rows = (res.data.users ?? []).filter((row): row is User => row != null && row._id != null)
+          setList(rows)
           setTotal(res.data.totalUsers ?? 0)
         } else {
           const err = res as { message: string; status?: number }
@@ -56,7 +57,9 @@ export function UsersPage(): React.ReactElement {
   }, [canListUsers, search, page, addToast])
 
   useEffect(() => {
-    if (canListUsers) load()
+    queueMicrotask(() => {
+      if (canListUsers) void load()
+    })
   }, [canListUsers, load])
 
   const totalPages = Math.ceil(total / limit) || 1
@@ -66,9 +69,6 @@ export function UsersPage(): React.ReactElement {
       <div className="min-w-0 space-y-7">
         <Card className="min-w-0 p-6">
           <h2 className="font-display text-lg font-bold text-[var(--app-text)]">Access restricted</h2>
-          <p className="mt-2 font-body text-sm text-[var(--app-muted)]">
-            Only company accounts and users with Admin or Manager role can view and manage company users.
-          </p>
           <Link to="/tasks" className="mt-4 inline-block font-body text-sm font-medium text-[var(--app-text)] underline hover:no-underline">
             Go to Tasks
           </Link>
@@ -119,9 +119,6 @@ export function UsersPage(): React.ReactElement {
     <div className="min-w-0 space-y-6 sm:space-y-7">
       <div className="min-w-0">
         <h2 className="font-display text-lg font-bold text-[var(--app-text)] sm:text-xl">Company users</h2>
-        <p className="mt-1 max-w-full font-body text-sm leading-relaxed text-pretty text-[var(--app-muted)] break-words">
-          This list shows <strong>user accounts (employees)</strong> in your company—not your company account. You’re signed in as the company, so you won’t appear as a row here. Add employees with &quot;Add user&quot; and they will appear in this table.
-        </p>
       </div>
 
       <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between sm:gap-4">
@@ -237,7 +234,7 @@ export function UsersPage(): React.ReactElement {
                   header: 'Role',
                   render: (u) => (
                     <span className="inline-flex items-center rounded-md border border-[var(--app-border)] bg-[var(--app-bg)] px-2 py-0.5 font-body text-xs font-medium uppercase tracking-wider text-[var(--app-text)]">
-                      {u.role}
+                      {u.role ?? '—'}
                     </span>
                   ),
                 },

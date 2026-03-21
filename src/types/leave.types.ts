@@ -1,3 +1,4 @@
+/** Legacy / display constants; API PATCH uses `Approved` | `Rejected`, submit uses `Sick` | `Casual` | `Annual`. */
 export const LeaveStatus = {
   Pending: 'pending',
   Approved: 'approved',

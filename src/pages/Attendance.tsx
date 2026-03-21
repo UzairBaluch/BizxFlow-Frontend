@@ -8,6 +8,12 @@ import { Button } from '@/components/ui/Button'
 import { DataTable } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 
+function defaultAttendanceRange(): { from: string; to: string } {
+  const to = new Date()
+  const from = new Date(to.getTime() - 30 * 86400000)
+  return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) }
+}
+
 export function AttendancePage(): React.ReactElement {
   const { accountType, user } = useAuth()
   const canSeeAllAttendance = accountType === 'company' || user?.role === 'Admin' || user?.role === 'Manager'
@@ -19,7 +25,8 @@ export function AttendancePage(): React.ReactElement {
 
   const load = useCallback(() => {
     setLoading(true)
-    const api = canSeeAllAttendance ? attendanceApi.allRecords() : attendanceApi.myRecord()
+    const range = defaultAttendanceRange()
+    const api = canSeeAllAttendance ? attendanceApi.allRecords(range) : attendanceApi.myRecord(range)
     api
       .then((res) => {
         if (res.success && res.data) {
@@ -36,7 +43,9 @@ export function AttendancePage(): React.ReactElement {
   }, [canSeeAllAttendance, addToast])
 
   useEffect(() => {
-    load()
+    queueMicrotask(() => {
+      void load()
+    })
   }, [load])
 
   function handleCheckIn(): void {
@@ -110,26 +119,25 @@ export function AttendancePage(): React.ReactElement {
         </Card>
       )}
 
-      <Card className="min-w-0 overflow-hidden p-0">
+      <Card className="min-w-0 overflow-hidden rounded-xl p-0 sm:rounded-lg">
         {loading ? (
-          <div className="flex justify-center py-24">
+          <div className="flex min-h-[200px] items-center justify-center py-16 sm:min-h-0 sm:py-24">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--app-border)] border-t-[var(--app-text)]" />
           </div>
         ) : (
-          <>
-            <DataTable<AttendanceRecord>
-              columns={[
-                { key: 'date', header: 'Date', render: (r) => r.date },
-                { key: 'user', header: 'User', render: (r) => userName(r) },
-                { key: 'checkIn', header: 'In', render: (r) => r.checkIn ?? '—' },
-                { key: 'checkOut', header: 'Out', render: (r) => r.checkOut ?? '—' },
-                { key: 'status', header: 'Status', render: (r) => (r.status ? <StatusBadge status={r.status} /> : '—') },
-              ]}
-              data={records}
-              keyExtractor={(r) => r._id}
-              emptyMessage="No records"
-            />
-          </>
+          <DataTable<AttendanceRecord>
+            columns={[
+              { key: 'date', header: 'Date', render: (r) => r.date },
+              { key: 'user', header: 'User', render: (r) => userName(r) },
+              { key: 'checkIn', header: 'In', render: (r) => r.checkIn ?? '—' },
+              { key: 'checkOut', header: 'Out', render: (r) => r.checkOut ?? '—' },
+              { key: 'status', header: 'Status', render: (r) => (r.status ? <StatusBadge status={r.status} /> : '—') },
+            ]}
+            data={records}
+            keyExtractor={(r) => r._id}
+            emptyMessage="No records"
+            hideHeaderWhenEmpty
+          />
         )}
       </Card>
     </div>

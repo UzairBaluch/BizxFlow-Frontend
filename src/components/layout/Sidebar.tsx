@@ -51,7 +51,8 @@ const MANAGEMENT_NAV = [{ path: '/users', label: 'Users', icon: Users }] as cons
 const DRAWER_WIDTH = 256
 const RAIL_WIDTH = 72
 
-function roleFromString(r: string): Role {
+function roleFromString(r: unknown): Role {
+  if (r == null || typeof r !== 'string') return Role.Employee
   if (r === 'Admin') return Role.Admin
   if (r === 'Manager') return Role.Manager
   return Role.Employee
@@ -68,9 +69,12 @@ export function Sidebar(): React.ReactElement {
   const location = useLocation()
   const navigate = useNavigate()
   const isCompany = accountType === 'company'
-  const role = user?.role ? roleFromString(user.role) : Role.Employee
-  const canSeeDashboard = isCompany || role === Role.Admin || role === Role.Manager
-  const canSeeManagement = canSeeDashboard // Dashboard and Add user / Users: company, Admin, Manager only
+  const role = user != null ? roleFromString(user.role) : Role.Employee
+  /** GET /dashboard — company JWT or Admin/Manager user JWT. */
+  const canSeeDashboard =
+    isCompany || (accountType === 'user' && (role === Role.Admin || role === Role.Manager))
+  /** Users / add-user: company or Admin/Manager user */
+  const canSeeManagement = isCompany || role === Role.Admin || role === Role.Manager
   const profileLabel = isCompany ? 'Company settings' : 'Profile'
 
   function handleLogout(): void {

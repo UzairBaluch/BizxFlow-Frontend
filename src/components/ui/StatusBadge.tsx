@@ -6,8 +6,11 @@ const styleMap: Record<string, BorderStyle> = {
   Present: 'solid',
   Absent: 'dashed',
   Pending: 'dotted',
+  pending: 'dotted',
   Approved: 'solid',
+  approved: 'solid',
   Rejected: 'dashed',
+  rejected: 'dashed',
   /** Task model */
   'In Progress': 'dashed',
   Done: 'solid',

@@ -18,6 +18,8 @@ export type User = {
   email: string;
   fullName: string;
   role: Role;
+  /** Tenant; set by backend for user JWT */
+  companyId?: string;
   profilePicture?: string;
   createdAt?: string;
 };
@@ -26,6 +28,7 @@ export type ApiSuccess<T> = {
   success: true;
   data: T;
   message?: string;
+  statusCode?: number;
 };
 
 export type ApiError = {
@@ -75,6 +78,8 @@ export type Task = {
   status: TaskStatus;
   assignedTo: string | User;
   createdBy: string | User;
+  /** Populated on GET /all-tasks for admin/company UIs */
+  createdByCompany?: string | Pick<Company, 'companyName'>;
   dueDate?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -85,16 +90,16 @@ export type CreateTaskBody = {
   assignedTo: string;
   dueDate?: string;
 };
-export type UpdateTaskBody = {
-  status?: TaskStatus;
-  title?: string;
-  description?: string;
-  assignedTo?: string;
-  dueDate?: string | null;
-};
+/** PATCH /tasks/:id — assignee only; body is status per API spec */
+export type UpdateTaskBody = { status: TaskStatus };
 
 // Leave
-export type LeaveStatus = 'pending' | 'approved' | 'rejected';
+/** List/detail status from API (may be lowercase or Title Case) */
+export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'Pending' | 'Approved' | 'Rejected';
+/** POST /submit-leave */
+export type LeaveTypeSubmit = 'Sick' | 'Casual' | 'Annual';
+/** PATCH /update-leave/:id */
+export type LeaveReviewStatus = 'Approved' | 'Rejected';
 export type LeaveRequest = {
   _id: string;
   user: string | User;
@@ -111,12 +116,12 @@ export type LeaveRequest = {
   createdAt?: string;
 };
 export type SubmitLeaveBody = {
-  leaveType: string;
+  leaveType: LeaveTypeSubmit;
   startDate: string;
   endDate: string;
   reason?: string;
 };
-export type UpdateLeaveBody = { status: LeaveStatus };
+export type UpdateLeaveBody = { status: LeaveReviewStatus };
 
 // Dashboard
 export type DashboardData = {
@@ -133,4 +138,19 @@ export type AddUserBody = { fullName: string; email: string; password: string; r
 
 // Paginated
 export type PaginatedUsers = { users: User[]; totalUsers: number };
-export type PaginatedTasks = { tasks: Task[]; totalTasks: number };
+export type PaginatedTasks = {
+  tasks: Task[];
+  totalTasks: number;
+  page?: number;
+  limit?: number;
+};
+
+// Announcements
+export type Announcement = {
+  _id: string;
+  title: string;
+  body: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type CreateAnnouncementBody = { title: string; body: string };
