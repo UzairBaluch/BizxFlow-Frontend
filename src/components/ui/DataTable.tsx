@@ -20,14 +20,15 @@ export function DataTable<T extends Record<string, unknown>>({
   className,
 }: DataTableProps<T>): React.ReactElement {
   return (
-    <div className={cn('w-full', className)}>
-      <table className="w-full border-collapse">
+    <div className={cn('w-full min-w-0 max-w-full overflow-x-auto', className)}>
+      {/* Narrow viewports: horizontal scroll inside wrapper instead of clipping columns */}
+      <table className="w-full min-w-[720px] border-collapse lg:min-w-full">
         <thead>
           <tr className="border-b border-[var(--app-border)]">
             {columns.map((col) => (
               <th
                 key={String(col.key)}
-                className="px-4 py-3 text-left font-body text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--app-muted)]"
+                className="whitespace-nowrap px-3 py-2.5 text-left font-body text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--app-muted)] sm:px-4 sm:py-3"
               >
                 {col.header}
               </th>
@@ -37,7 +38,10 @@ export function DataTable<T extends Record<string, unknown>>({
         <tbody>
           {data.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-4 py-8 text-center font-body text-sm text-[var(--app-muted)]">
+              <td
+                colSpan={columns.length}
+                className="px-3 py-8 text-center font-body text-sm text-[var(--app-muted)] sm:px-4"
+              >
                 {emptyMessage}
               </td>
             </tr>
@@ -51,7 +55,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 className="h-12 border-b border-[var(--app-border)] font-body text-sm text-[var(--app-text)] transition hover:bg-[var(--app-card)]"
               >
                 {columns.map((col) => (
-                  <td key={String(col.key)} className="px-4 py-3">
+                  <td key={String(col.key)} className="px-3 py-2.5 align-middle sm:px-4 sm:py-3">
                     {col.render
                       ? col.render(row)
                       : String(row[col.key as keyof T] ?? '')}
@@ -76,7 +80,7 @@ interface PaginationProps {
 
 export function Pagination({ page, totalPages, onPrev, onNext, className }: PaginationProps): React.ReactElement {
   return (
-    <div className={cn('mt-4 flex items-center gap-3', className)}>
+    <div className={cn('mt-4 flex flex-wrap items-center justify-center gap-2 sm:justify-start sm:gap-3', className)}>
       <button
         type="button"
         onClick={onPrev}

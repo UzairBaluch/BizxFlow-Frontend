@@ -210,10 +210,10 @@ export function LeavePage(): React.ReactElement {
   ]
 
   return (
-    <div className="space-y-7">
+    <div className="min-w-0 space-y-6 sm:space-y-7">
       {isCompany && (
-        <Card className="border-[var(--app-border)] bg-[var(--app-card)] p-4">
-          <p className="font-body text-sm text-[var(--app-text)]">
+        <Card className="min-w-0 border-[var(--app-border)] bg-[var(--app-card)] p-4">
+          <p className="max-w-full font-body text-sm leading-relaxed text-pretty text-[var(--app-text)] break-words">
             You’re signed in as the <span className="font-semibold">company</span> account. Review and approve leave for your organization below.{' '}
             <span className="text-[var(--app-muted)]">
               To submit your own leave request, sign in with an employee user account.
@@ -222,16 +222,16 @@ export function LeavePage(): React.ReactElement {
         </Card>
       )}
 
-      <div className="flex justify-end">
+      <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:justify-end">
         {canUseEmployeeLeave && (
-          <Button variant="primary" onClick={() => setPanelOpen(true)}>
+          <Button variant="primary" className="w-full shrink-0 sm:w-auto" onClick={() => setPanelOpen(true)}>
             Apply leave
           </Button>
         )}
       </div>
 
       {loading ? (
-        <Card className="overflow-hidden p-0">
+        <Card className="min-w-0 overflow-hidden p-0">
           <div className="flex justify-center py-24">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--app-border)] border-t-[var(--app-text)]" />
           </div>
@@ -239,9 +239,9 @@ export function LeavePage(): React.ReactElement {
       ) : (
         <>
           {isUser && isAdminOrManager && (
-            <section className="space-y-3">
+            <section className="min-w-0 space-y-3">
               <h2 className="font-display text-lg font-semibold text-[var(--app-text)]">My leave</h2>
-              <Card className="overflow-hidden p-0">
+              <Card className="min-w-0 overflow-hidden p-0">
                 <DataTable<LeaveRequest>
                   columns={myTableColumns}
                   data={myLeaves}
@@ -253,11 +253,11 @@ export function LeavePage(): React.ReactElement {
           )}
 
           {canManageTeamLeaves && (
-            <section className="space-y-3">
+            <section className="min-w-0 space-y-3">
               <h2 className="font-display text-lg font-semibold text-[var(--app-text)]">
                 {isCompany ? 'All leave requests' : 'Team leave (approve / reject)'}
               </h2>
-              <Card className="overflow-hidden p-0">
+              <Card className="min-w-0 overflow-hidden p-0">
                 <DataTable<LeaveRequest>
                   columns={teamTableColumns}
                   data={allLeaves}
@@ -269,7 +269,7 @@ export function LeavePage(): React.ReactElement {
           )}
 
           {isUser && !isAdminOrManager && (
-            <Card className="overflow-hidden p-0">
+            <Card className="min-w-0 overflow-hidden p-0">
               <DataTable<LeaveRequest>
                 columns={myTableColumns}
                 data={myLeaves}

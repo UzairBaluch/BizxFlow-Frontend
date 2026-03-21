@@ -63,8 +63,8 @@ export function UsersPage(): React.ReactElement {
 
   if (!canListUsers) {
     return (
-      <div className="space-y-7">
-        <Card className="p-6">
+      <div className="min-w-0 space-y-7">
+        <Card className="min-w-0 p-6">
           <h2 className="font-display text-lg font-bold text-[var(--app-text)]">Access restricted</h2>
           <p className="mt-2 font-body text-sm text-[var(--app-muted)]">
             Only company accounts and users with Admin or Manager role can view and manage company users.
@@ -116,16 +116,16 @@ export function UsersPage(): React.ReactElement {
   }
 
   return (
-    <div className="space-y-7">
-      <div>
+    <div className="min-w-0 space-y-6 sm:space-y-7">
+      <div className="min-w-0">
         <h2 className="font-display text-lg font-bold text-[var(--app-text)] sm:text-xl">Company users</h2>
-        <p className="mt-1 font-body text-sm text-[var(--app-muted)]">
+        <p className="mt-1 max-w-full font-body text-sm leading-relaxed text-pretty text-[var(--app-muted)] break-words">
           This list shows <strong>user accounts (employees)</strong> in your company—not your company account. You’re signed in as the company, so you won’t appear as a row here. Add employees with &quot;Add user&quot; and they will appear in this table.
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="max-w-xs">
+      <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between sm:gap-4">
+        <div className="w-full min-w-0 sm:max-w-xs">
           <Input
             type="search"
             placeholder="Search by name or email"
@@ -134,10 +134,11 @@ export function UsersPage(): React.ReactElement {
               setSearch(e.target.value)
               setPage(1)
             }}
+            className="w-full"
           />
         </div>
         {canAddUser && (
-          <Button variant="primary" onClick={() => setAddModalOpen(true)}>
+          <Button variant="primary" className="w-full shrink-0 sm:w-auto sm:self-start" onClick={() => setAddModalOpen(true)}>
             Add user
           </Button>
         )}
@@ -202,7 +203,7 @@ export function UsersPage(): React.ReactElement {
         </form>
       </Modal>
 
-      <Card className="overflow-hidden p-0">
+      <Card className="min-w-0 overflow-hidden p-0">
         {loading ? (
           <div className="flex justify-center py-24">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--app-border)] border-t-[var(--app-text)]" />

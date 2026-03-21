@@ -29,15 +29,19 @@ export function SlidePanel({ open, onClose, title, children, className }: SlideP
             exit={{ x: '100%' }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
             className={cn(
-              'fixed right-0 top-0 z-50 h-full w-full max-w-[400px] border-l border-[var(--app-border)] bg-[var(--app-card)] p-5 shadow-xl',
+              'fixed right-0 top-0 z-50 flex h-[100dvh] max-h-[100dvh] w-full max-w-[min(100vw,400px)] flex-col border-l border-[var(--app-border)] bg-[var(--app-card)] shadow-xl',
+              'pt-[max(1.25rem,env(safe-area-inset-top))] pr-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pl-5 sm:max-w-[400px]',
               className
             )}
             role="dialog"
             aria-modal="true"
             aria-labelledby="panel-title"
           >
-            <div className="flex items-start justify-between gap-4">
-              <h2 id="panel-title" className="font-display text-base font-bold text-[var(--app-text)]">
+            <div className="flex shrink-0 items-start justify-between gap-3">
+              <h2
+                id="panel-title"
+                className="min-w-0 flex-1 break-words font-display text-base font-bold text-[var(--app-text)]"
+              >
                 {title}
               </h2>
               <button
@@ -49,7 +53,9 @@ export function SlidePanel({ open, onClose, title, children, className }: SlideP
                 <span className="text-2xl leading-none sm:text-3xl">×</span>
               </button>
             </div>
-            <div className="mt-6 overflow-y-auto">{children}</div>
+            <div className="mt-6 min-h-0 flex-1 overflow-y-auto overflow-x-hidden [-webkit-overflow-scrolling:touch]">
+              {children}
+            </div>
           </motion.aside>
         </>
       )}

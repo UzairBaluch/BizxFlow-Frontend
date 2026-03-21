@@ -99,8 +99,8 @@ export function ProfilePage(): React.ReactElement {
 
   if (isCompany && company) {
     return (
-      <div className="grid gap-5 sm:gap-6 lg:grid-cols-2 lg:gap-7">
-        <Card className="p-4 sm:p-5">
+      <div className="grid w-full min-w-0 gap-5 sm:gap-6 lg:grid-cols-2 lg:gap-7">
+        <Card className="min-w-0 p-4 sm:p-5">
           <CardTitle className="mb-3 sm:mb-4">Company logo</CardTitle>
           <div className="flex flex-wrap items-start gap-4 sm:gap-6">
             <div className="relative">
@@ -137,7 +137,7 @@ export function ProfilePage(): React.ReactElement {
           </div>
         </Card>
 
-        <Card className="p-4 sm:p-5">
+        <Card className="min-w-0 p-4 sm:p-5">
           <CardTitle className="mb-3 sm:mb-4">Update company</CardTitle>
           <form onSubmit={handleSaveCompanyProfile} className="space-y-4">
             <Input
@@ -151,9 +151,9 @@ export function ProfilePage(): React.ReactElement {
           </form>
         </Card>
 
-        <Card className="p-4 sm:p-5 lg:col-span-2">
+        <Card className="min-w-0 p-4 sm:p-5 lg:col-span-2">
           <CardTitle className="mb-3 sm:mb-4">Change password</CardTitle>
-          <form onSubmit={handleChangePassword} className="max-w-md space-y-4">
+          <form onSubmit={handleChangePassword} className="max-w-full space-y-4 sm:max-w-md">
             <Input
               label="Current password"
               type="password"
@@ -180,8 +180,8 @@ export function ProfilePage(): React.ReactElement {
   if (!user) return null as unknown as React.ReactElement
 
   return (
-    <div className="grid gap-5 sm:gap-6 lg:grid-cols-2 lg:gap-7">
-      <Card className="p-4 sm:p-5">
+    <div className="grid w-full min-w-0 gap-5 sm:gap-6 lg:grid-cols-2 lg:gap-7">
+      <Card className="min-w-0 p-4 sm:p-5">
         <CardTitle className="mb-3 sm:mb-4">Profile picture</CardTitle>
         <div className="flex flex-wrap items-start gap-4 sm:gap-6">
           <div className="relative">
@@ -220,7 +220,7 @@ export function ProfilePage(): React.ReactElement {
         </div>
       </Card>
 
-      <Card className="p-4 sm:p-5">
+      <Card className="min-w-0 p-4 sm:p-5">
         <CardTitle className="mb-3 sm:mb-4">Update profile</CardTitle>
         <form onSubmit={handleSaveUserProfile} className="space-y-4">
           <Input
@@ -234,9 +234,9 @@ export function ProfilePage(): React.ReactElement {
         </form>
       </Card>
 
-      <Card className="p-4 sm:p-5 lg:col-span-2">
+      <Card className="min-w-0 p-4 sm:p-5 lg:col-span-2">
         <CardTitle className="mb-3 sm:mb-4">Change password</CardTitle>
-        <form onSubmit={handleChangePassword} className="max-w-md space-y-4">
+        <form onSubmit={handleChangePassword} className="max-w-full space-y-4 sm:max-w-md">
           <Input
             label="Current password"
             type="password"

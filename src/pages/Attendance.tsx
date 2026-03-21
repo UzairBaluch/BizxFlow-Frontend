@@ -91,26 +91,26 @@ export function AttendancePage(): React.ReactElement {
       : String(r.user)
 
   return (
-    <div className="space-y-7">
+    <div className="min-w-0 space-y-6 sm:space-y-7">
       {isEmployee && (
-        <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
-          <div className="flex flex-1 items-center gap-6">
+        <Card className="flex min-w-0 flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-5 sm:p-5">
+          <div className="flex min-w-0 flex-wrap items-center gap-3 sm:gap-6">
             <span className="font-body text-sm text-[var(--app-muted)]">Check-in: —</span>
             <StatusBadge status="Present" />
             <span className="font-body text-sm text-[var(--app-muted)]">Check-out: —</span>
           </div>
-          <div className="flex gap-3">
-            <Button variant="primary" onClick={handleCheckIn} loading={checking}>
+          <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:gap-3">
+            <Button variant="primary" className="w-full sm:w-auto" onClick={handleCheckIn} loading={checking}>
               Check In
             </Button>
-            <Button variant="secondary" onClick={handleCheckOut} loading={checking}>
+            <Button variant="secondary" className="w-full sm:w-auto" onClick={handleCheckOut} loading={checking}>
               Check Out
             </Button>
           </div>
         </Card>
       )}
 
-      <Card className="overflow-hidden p-0">
+      <Card className="min-w-0 overflow-hidden p-0">
         {loading ? (
           <div className="flex justify-center py-24">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--app-border)] border-t-[var(--app-text)]" />

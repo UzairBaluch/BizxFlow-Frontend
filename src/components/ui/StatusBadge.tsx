@@ -8,6 +8,9 @@ const styleMap: Record<string, BorderStyle> = {
   Pending: 'dotted',
   Approved: 'solid',
   Rejected: 'dashed',
+  /** Task model */
+  'In Progress': 'dashed',
+  Done: 'solid',
 }
 
 export interface StatusBadgeProps {

@@ -4,6 +4,7 @@ import { Users, CheckSquare, Calendar, Clock } from 'lucide-react'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { motion } from 'framer-motion'
 import { dashboard as dashboardApi, users as usersApi } from '@/api/client'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useAuth } from '@/context/AuthContext'
 import type { DashboardData } from '@/types/api'
 import type { RecentActivity } from '@/types/dashboard.types'
@@ -21,6 +22,7 @@ export function DashboardPage(): React.ReactElement {
 
   const isCompany = accountType === 'company'
   const canSeeDashboard = isCompany || user?.role === 'Admin' || user?.role === 'Manager'
+  const compactCharts = useMediaQuery('(max-width: 480px)')
 
   useEffect(() => {
     if (!canSeeDashboard) {
@@ -51,8 +53,8 @@ export function DashboardPage(): React.ReactElement {
   // Employee: no access to dashboard (company, Admin, Manager only)
   if (!canSeeDashboard) {
     return (
-      <div className="space-y-7">
-        <Card className="p-6">
+      <div className="min-w-0 space-y-7">
+        <Card className="min-w-0 p-6">
           <h2 className="font-display text-lg font-bold text-[var(--app-text)]">Access restricted</h2>
           <p className="mt-2 font-body text-sm text-[var(--app-muted)]">
             Dashboard is for company accounts and users with Admin or Manager role.
@@ -76,7 +78,7 @@ export function DashboardPage(): React.ReactElement {
   // For non-company (Admin/Manager), show error and stop. For company, show full dashboard with empty data below.
   if (error && !isCompany) {
     return (
-      <Card className="p-4 sm:p-6 md:p-8">
+      <Card className="min-w-0 p-4 sm:p-6 md:p-8">
         <p className="font-body text-sm text-[var(--app-text)]">{error}</p>
         <p className="mt-2 font-body text-xs text-[var(--app-muted)] sm:text-sm">Sign in to load live data.</p>
       </Card>
@@ -90,13 +92,16 @@ export function DashboardPage(): React.ReactElement {
     { label: "Today's attendance", value: data?.todayAttendance ?? 0, icon: <Clock className="h-5 w-5" /> },
   ]
 
-  const taskChartData = (data?.tasksByStatus ?? []).map((s) => ({ name: s._id.replace('-', ' '), value: s.count }))
+  const taskChartData = (data?.tasksByStatus ?? []).map((s) => ({ name: s._id, value: s.count }))
   const leaveChartData = (data?.leavesByStatus ?? []).map((s) => ({ name: s._id, count: s.count }))
   const recentActivity: RecentActivity[] = []
 
+  const pieInner = compactCharts ? 44 : 60
+  const pieOuter = compactCharts ? 58 : 80
+
   return (
-    <div className="space-y-5 sm:space-y-7">
-      <section className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+    <div className="w-full min-w-0 space-y-5 sm:space-y-7">
+      <section className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         {totals.map((item, i) => (
           <StatCard
             key={item.label}
@@ -108,23 +113,23 @@ export function DashboardPage(): React.ReactElement {
         ))}
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card className="min-w-0 p-4 sm:p-5">
+      <section className="grid min-w-0 gap-4 lg:grid-cols-2">
+        <Card className="min-w-0 overflow-hidden p-4 sm:p-5">
           <CardTitle className="mb-3 sm:mb-4">Task status</CardTitle>
-          <div className="h-[240px] w-full min-w-0" style={{ minHeight: 240 }}>
+          <div className="h-[220px] w-full min-w-0 sm:h-[240px]" style={{ minHeight: 220 }}>
             {taskChartData.length === 0 ? (
               <div className="flex h-full items-center justify-center font-body text-sm text-[var(--app-muted)]">
                 No data
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={240} minHeight={240}>
+              <ResponsiveContainer width="100%" height={compactCharts ? 220 : 240} minHeight={compactCharts ? 220 : 240}>
                 <PieChart>
                   <Pie
                     data={taskChartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius={pieInner}
+                    outerRadius={pieOuter}
                     paddingAngle={2}
                     dataKey="value"
                   >
@@ -147,15 +152,15 @@ export function DashboardPage(): React.ReactElement {
           </div>
         </Card>
 
-        <Card className="min-w-0 p-4 sm:p-5">
+        <Card className="min-w-0 overflow-hidden p-4 sm:p-5">
           <CardTitle className="mb-3 sm:mb-4">Leave status</CardTitle>
-          <div className="h-[240px] w-full min-w-0" style={{ minHeight: 240 }}>
+          <div className="h-[220px] w-full min-w-0 sm:h-[240px]" style={{ minHeight: 220 }}>
             {leaveChartData.length === 0 ? (
               <div className="flex h-full items-center justify-center font-body text-sm text-[var(--app-muted)]">
                 No data
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={240} minHeight={240}>
+              <ResponsiveContainer width="100%" height={compactCharts ? 220 : 240} minHeight={compactCharts ? 220 : 240}>
                 <BarChart data={leaveChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
                   <XAxis
                     dataKey="name"

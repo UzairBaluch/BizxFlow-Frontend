@@ -23,14 +23,14 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             onClick={onClose}
             aria-hidden
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
               className={cn(
-                'w-full max-w-[480px] rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] p-5 shadow-lg',
+                'flex max-h-[min(90dvh,720px)] w-full max-w-[480px] flex-col overflow-hidden rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] shadow-lg',
                 className
               )}
               onClick={(e) => e.stopPropagation()}
@@ -38,8 +38,11 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
               aria-modal="true"
               aria-labelledby="modal-title"
             >
-              <div className="flex items-start justify-between gap-4">
-                <h2 id="modal-title" className="font-display text-base font-bold text-[var(--app-text)]">
+              <div className="flex shrink-0 items-start justify-between gap-3 p-5 pb-0">
+                <h2
+                  id="modal-title"
+                  className="min-w-0 flex-1 break-words font-display text-base font-bold text-[var(--app-text)]"
+                >
                   {title}
                 </h2>
                 <button
@@ -51,7 +54,9 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
                   <span className="text-2xl leading-none sm:text-3xl">×</span>
                 </button>
               </div>
-              <div className="mt-4">{children}</div>
+              <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-5 [-webkit-overflow-scrolling:touch]">
+                {children}
+              </div>
             </motion.div>
           </div>
         </>

@@ -63,19 +63,35 @@ export type AttendanceRecord = {
   status?: string;
 };
 
-// Tasks
-export type TaskStatus = 'pending' | 'in-progress' | 'completed';
+// Tasks (aligned with Mongoose: Pending | In Progress | Done; assignedTo & createdBy required)
+import type { TaskStatus } from './task.types';
+
+export type { TaskStatus } from './task.types';
+
 export type Task = {
   _id: string;
   title: string;
   description?: string;
   status: TaskStatus;
-  assignedTo?: string | User;
-  createdBy?: string | User;
+  assignedTo: string | User;
+  createdBy: string | User;
+  dueDate?: string;
   createdAt?: string;
+  updatedAt?: string;
 };
-export type CreateTaskBody = { title: string; description?: string; assignedTo?: string };
-export type UpdateTaskBody = { status?: TaskStatus; title?: string; description?: string; assignedTo?: string };
+export type CreateTaskBody = {
+  title: string;
+  description?: string;
+  assignedTo: string;
+  dueDate?: string;
+};
+export type UpdateTaskBody = {
+  status?: TaskStatus;
+  title?: string;
+  description?: string;
+  assignedTo?: string;
+  dueDate?: string | null;
+};
 
 // Leave
 export type LeaveStatus = 'pending' | 'approved' | 'rejected';

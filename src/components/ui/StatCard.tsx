@@ -18,7 +18,7 @@ export function StatCard({ icon, value, label, change, className, index = 0 }: S
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut', delay: index * 0.06 }}
       className={cn(
-        'rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] p-5 transition hover:border-[var(--app-muted)] dark:shadow-none',
+        'min-w-0 rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] p-5 transition hover:border-[var(--app-muted)] dark:shadow-none',
         'shadow-sm',
         className
       )}
