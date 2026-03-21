@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
+import { resolvePostLoginPath } from '@/lib/authAccess'
 import { AuthOverLanding } from '@/components/AuthOverLanding'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -14,7 +15,7 @@ export function LoginPage(): React.ReactElement {
   const { addToast } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/dashboard'
+  const fromState = (location.state as { from?: { pathname: string } })?.from?.pathname
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
@@ -23,7 +24,8 @@ export function LoginPage(): React.ReactElement {
     setSubmitting(false)
     if (result.ok) {
       addToast('Signed in.')
-      navigate(from, { replace: true })
+      const to = resolvePostLoginPath(result.accountType, result.user, fromState)
+      navigate(to, { replace: true })
     } else {
       addToast(result.message, 'error')
     }

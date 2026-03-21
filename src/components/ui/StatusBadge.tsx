@@ -4,6 +4,9 @@ type BorderStyle = 'solid' | 'dashed' | 'dotted'
 
 const styleMap: Record<string, BorderStyle> = {
   Present: 'solid',
+  'Not checked in': 'dotted',
+  'Checked in': 'solid',
+  'Checked out': 'solid',
   Absent: 'dashed',
   Pending: 'dotted',
   pending: 'dotted',

@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
+import { defaultHomePath } from '@/lib/authAccess'
 import { auth } from '@/api/client'
 import { AuthOverLanding } from '@/components/AuthOverLanding'
 import { Button } from '@/components/ui/Button'
@@ -52,7 +53,8 @@ export function RegisterPage(): React.ReactElement {
     setSubmitting(false)
     if (result.ok) {
       addToast('Company created. Welcome!')
-      setTimeout(() => navigate('/dashboard', { replace: true }), 0)
+      const home = defaultHomePath(result.accountType, result.user)
+      setTimeout(() => navigate(home, { replace: true }), 0)
     } else {
       addToast(result.message, 'error')
     }

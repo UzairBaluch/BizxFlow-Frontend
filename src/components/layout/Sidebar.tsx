@@ -27,10 +27,10 @@ import { useAuth } from '@/context/AuthContext'
 import { Role } from '@/types/auth.types'
 import { BizxFlowLogo } from '@/components/BizxFlowLogo'
 
-const MAIN_NAV = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { path: '/attendance', label: 'Attendance', icon: Clock },
+const DASHBOARD_ITEM = { path: '/dashboard', label: 'Dashboard', icon: LayoutGrid } as const
+const MAIN_NAV_REST = [
   { path: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { path: '/attendance', label: 'Attendance', icon: Clock },
   { path: '/leave', label: 'Leave', icon: Calendar },
 ] as const
 
@@ -142,7 +142,7 @@ export function Sidebar(): React.ReactElement {
           <p className={cn('mb-2.5 px-3 font-body text-[10px] font-semibold uppercase tracking-widest text-[var(--app-muted)]', isRailMode && 'sr-only')}>
             Main
           </p>
-          {MAIN_NAV.filter((item) => item.path !== '/dashboard' || canSeeDashboard).map((item) => {
+          {(canSeeDashboard ? [DASHBOARD_ITEM, ...MAIN_NAV_REST] : [...MAIN_NAV_REST]).map((item) => {
             const isActive = location.pathname === item.path
             const Icon = item.icon
             return (

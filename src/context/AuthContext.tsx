@@ -16,7 +16,9 @@ type AuthState = {
   token: string | null;
 };
 
-export type AuthResult = { ok: true } | { ok: false; message: string };
+export type AuthResult =
+  | { ok: true; accountType: AccountType; user: User | null; company: Company | null }
+  | { ok: false; message: string };
 
 const AuthContext = createContext<AuthState & {
   login: (email: string, password: string) => Promise<AuthResult>;
@@ -121,8 +123,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const { token: t, accountType: type, user: u, company: c } = parseAuthResponse(raw);
     if (t && type) {
-      applyAuth(t, type, u ?? null, c ?? null);
-      return { ok: true };
+      const userVal = u ?? null;
+      const companyVal = c ?? null;
+      applyAuth(t, type, userVal, companyVal);
+      return { ok: true, accountType: type, user: userVal, company: companyVal };
     }
     return { ok: false, message: 'Invalid response from server.' };
   }, [applyAuth]);
@@ -142,8 +146,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       const { token: t, accountType: type, user: u, company: c } = parseAuthResponse(loginRaw);
       if (t && type) {
-        applyAuth(t, type, u ?? null, c ?? null);
-        return { ok: true };
+        const userVal = u ?? null;
+        const companyVal = c ?? null;
+        applyAuth(t, type, userVal, companyVal);
+        return { ok: true, accountType: type, user: userVal, company: companyVal };
       }
       return { ok: false, message: 'Account created. Please sign in.' };
     } catch (err) {

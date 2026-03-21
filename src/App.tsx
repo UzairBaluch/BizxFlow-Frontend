@@ -1,6 +1,7 @@
 import { Navigate, Route, BrowserRouter, Routes } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { DashboardGate } from '@/components/DashboardGate'
 import { LandingPage } from '@/pages/Landing'
 import { DashboardPage } from '@/pages/Dashboard'
 import { TasksPage } from '@/pages/Tasks'
@@ -31,9 +32,11 @@ export default function App(): React.ReactElement {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <AppLayout title="Dashboard">
-                <DashboardPage />
-              </AppLayout>
+              <DashboardGate>
+                <AppLayout title="Dashboard">
+                  <DashboardPage />
+                </AppLayout>
+              </DashboardGate>
             </ProtectedRoute>
           }
         />
