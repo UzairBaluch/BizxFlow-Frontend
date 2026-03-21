@@ -51,7 +51,8 @@ export async function apiRequest<T>(
   /** Lets callers treat 201/200 + minimal body as success (e.g. POST create with message-only JSON). */
   const body =
     json != null && typeof json === 'object' && !Array.isArray(json) ? { ...(json as object) } : {};
-  return { ...body, _httpStatus: res.status } as ApiResponse<T>;
+  /** Backend bodies vary; union `ApiResponse<T>` is stricter than runtime JSON. */
+  return { ...body, _httpStatus: res.status } as unknown as ApiResponse<T>;
 }
 
 // Auth (BizxFlow: company-based, under /api/v1/users/)
