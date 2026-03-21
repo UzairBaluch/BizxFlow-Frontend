@@ -1,18 +1,39 @@
-import { Moon, Sun } from 'lucide-react'
+import { Menu, Moon, Sun } from 'lucide-react'
 import { useThemeStore } from '@/stores/useThemeStore'
 
 export interface TopBarProps {
   title: string
+  /** When set (mobile layout), shows menu control to open/close the sidebar drawer. */
+  onMenuClick?: () => void
+  /** For aria-expanded when mobile menu is used */
+  menuOpen?: boolean
 }
 
-export function TopBar({ title }: TopBarProps): React.ReactElement {
+export function TopBar({ title, onMenuClick, menuOpen }: TopBarProps): React.ReactElement {
   const theme = useThemeStore((s) => s.theme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
 
   return (
     <header className="sticky top-0 z-30 flex h-12 min-h-[44px] items-center justify-between gap-2 border-b border-[var(--app-border)] bg-[var(--app-bg)] px-3 sm:h-14 sm:gap-4 sm:px-5 md:px-7">
-      <div className="flex min-w-0 flex-1 items-center">
-        <h1 className="truncate font-display text-lg font-bold text-[var(--app-text)] sm:text-xl md:text-[22px]">{title}</h1>
+      <div
+        className={
+          onMenuClick != null
+            ? 'flex min-w-0 flex-1 items-center gap-0'
+            : 'flex min-w-0 flex-1 items-center gap-2 sm:gap-3'
+        }
+      >
+        {onMenuClick != null && (
+          <button
+            type="button"
+            onClick={onMenuClick}
+            className="-mr-1 flex h-9 w-9 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-[var(--app-muted)] transition hover:bg-[var(--app-card)] hover:text-[var(--app-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-text)] sm:min-h-0 sm:min-w-0"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen ?? false}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        )}
+        <h1 className="min-w-0 truncate font-display text-lg font-bold text-[var(--app-text)] sm:text-xl md:text-[22px]">{title}</h1>
       </div>
       <div className="flex shrink-0 items-center">
         <button
