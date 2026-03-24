@@ -3,8 +3,9 @@
  * Routes: `/api/v1/users/...` — see `docs/API_INTEGRATION.md` and live `/api-docs` on the API host.
  */
 import type { ApiResponse } from '../types/api';
+import { API_ORIGIN } from '../lib/apiOrigin';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://bizxflow-production.up.railway.app';
+const API_BASE = API_ORIGIN;
 
 function getToken(): string | null {
   return localStorage.getItem('accessToken');
@@ -292,6 +293,47 @@ export const announcements = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+};
+
+/**
+ * In-app notifications (**user JWT only** — not company). History + read state via REST; Socket.io pushes new rows.
+ * If `markRead` path differs on your server, adjust here to match OpenAPI.
+ */
+export const notifications = {
+  mine: (params?: { page?: number; limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.page != null) sp.set('page', String(params.page));
+    if (params?.limit != null) sp.set('limit', String(params.limit));
+    const q = sp.toString();
+    return apiRequest<{ notifications?: import('../types/api').InAppNotification[] } | import('../types/api').InAppNotification[]>(
+      `/api/v1/users/my-notifications${q ? `?${q}` : ''}`
+    );
+  },
+  unreadCount: () =>
+    apiRequest<{ unreadCount?: number; count?: number }>('/api/v1/users/unread-count'),
+  /**
+   * Mark one notification read. Tries `my-notifications/.../read` first, then `notifications/.../read`
+   * (covers either OpenAPI style).
+   */
+  markRead: async (notificationId: string) => {
+    const e = encodeURIComponent(notificationId);
+    const primary = await apiRequest<unknown>(`/api/v1/users/my-notifications/${e}/read`, {
+      method: 'PATCH',
+      body: '{}',
+    });
+    const fail =
+      primary != null &&
+      typeof primary === 'object' &&
+      (primary as { success?: boolean }).success === false;
+    const st = (primary as { status?: number }).status;
+    if (fail && st === 404) {
+      return apiRequest<unknown>(`/api/v1/users/notifications/${e}/read`, {
+        method: 'PATCH',
+        body: '{}',
+      });
+    }
+    return primary;
+  },
 };
 
 // Leave

@@ -12,7 +12,7 @@ export interface SlidePanelProps {
 
 export function SlidePanel({ open, onClose, title, children, className }: SlidePanelProps): React.ReactElement {
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="sync" initial={false}>
       {open ? (
         <motion.div
           key="slide-panel-root"

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { tasks as tasksApi, users as usersApi } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { Task, User } from '@/types/api'
 import { TaskStatus } from '@/types/task.types'
 import { Card } from '@/components/ui/Card'
@@ -49,10 +50,122 @@ function createdByLabel(task: Task): string {
   return '—'
 }
 
+/** Mongo extended JSON / mixed API shapes → hex id string for map keys and lookups. */
+function mongoIdToString(raw: unknown): string {
+  if (typeof raw === 'string') {
+    const t = raw.trim()
+    return t
+  }
+  if (raw != null && typeof raw === 'object' && '$oid' in (raw as object)) {
+    const o = (raw as { $oid: unknown }).$oid
+    return typeof o === 'string' ? o.trim() : ''
+  }
+  return ''
+}
+
 function assigneeId(task: Task): string {
   const a = task.assignedTo
-  if (typeof a === 'object' && a && '_id' in a) return (a as User)._id
-  return String(a ?? '')
+  if (typeof a === 'string') {
+    const t = a.trim()
+    return mongoIdToString(t) || t
+  }
+  if (typeof a === 'object' && a != null) {
+    const o = a as Record<string, unknown>
+    const fromId = mongoIdToString(o._id) || mongoIdToString(o.id)
+    if (fromId) return fromId
+  }
+  return String(a ?? '').trim()
+}
+
+/** `GET all-users` body shapes vary; avoid requiring `success === true` so names still resolve. */
+function extractUsersList(res: unknown): User[] {
+  if (res == null || typeof res !== 'object') return []
+  const r = res as Record<string, unknown>
+  if (r.success === false) return []
+  let arr: unknown[] = []
+  const data = r.data
+  if (Array.isArray(data)) {
+    arr = data
+  } else if (data != null && typeof data === 'object') {
+    const bag = data as Record<string, unknown>
+    const u = bag.users
+    if (Array.isArray(u)) arr = u
+    else if (Array.isArray(bag.items)) arr = bag.items
+    else if (Array.isArray(bag.results)) arr = bag.results
+  }
+  if (arr.length === 0 && Array.isArray((r as { users?: unknown }).users)) {
+    arr = (r as { users: unknown[] }).users
+  }
+  return arr.filter((x): x is User => x != null && typeof x === 'object')
+}
+
+/** Stable string `_id` for directory keys (never use raw object as Record key). */
+function userRowId(u: User | Record<string, unknown>): string {
+  const raw = (u as Record<string, unknown>)._id ?? (u as Record<string, unknown>).id
+  return mongoIdToString(raw)
+}
+
+function buildAssigneeDirectory(people: User[]): Record<string, string> {
+  const next: Record<string, string> = {}
+  for (const u of people) {
+    const id = userRowId(u)
+    if (!id) continue
+    const o = u as Record<string, unknown>
+    const label =
+      (typeof o.fullName === 'string' && o.fullName.trim()) ||
+      (typeof o.name === 'string' && o.name.trim()) ||
+      (typeof o.email === 'string' && o.email.trim()) ||
+      id
+    next[id] = label
+  }
+  return next
+}
+
+function assigneeCellLabel(task: Task, idToName: Record<string, string>): string {
+  if (typeof task.assignedTo === 'object' && task.assignedTo != null) {
+    const fromObj = userLabel(task.assignedTo)
+    if (fromObj !== '—') return fromObj
+  }
+  const id = assigneeId(task)
+  if (id && idToName[id]) return idToName[id]
+  const raw = userLabel(task.assignedTo)
+  if (raw !== '—' && !looksLikeMongoObjectId(raw)) return raw
+  return idToName[id] || raw || id || '—'
+}
+
+function looksLikeMongoObjectId(s: string): boolean {
+  return /^[a-f0-9]{24}$/i.test(s.trim())
+}
+
+/** Map API status strings to our canonical enum for comparisons. */
+function normalizeTaskStatus(s: Task['status'] | string | undefined): Task['status'] {
+  const t = String(s ?? '')
+    .trim()
+    .toLowerCase()
+  if (t === TaskStatus.Pending.toLowerCase() || t === 'pending') return TaskStatus.Pending
+  if (t === TaskStatus.InProgress.toLowerCase() || t === 'in progress' || t === 'inprogress')
+    return TaskStatus.InProgress
+  if (t === TaskStatus.Done.toLowerCase() || t === 'done' || t === 'complete') return TaskStatus.Done
+  return TaskStatus.Pending
+}
+
+const STATUS_ORDER: Task['status'][] = [TaskStatus.Pending, TaskStatus.InProgress, TaskStatus.Done]
+
+/** One-way flow: Pending → In Progress → Done only. */
+function nextTaskStatus(current: Task['status'] | string | undefined): Task['status'] | null {
+  const c = normalizeTaskStatus(current)
+  const i = STATUS_ORDER.indexOf(c)
+  if (i < 0 || i >= STATUS_ORDER.length - 1) return null
+  return STATUS_ORDER[i + 1] ?? null
+}
+
+function isTaskUpdateOk(res: unknown): boolean {
+  if (res == null || typeof res !== 'object') return false
+  const r = res as Record<string, unknown>
+  if (r.success === false) return false
+  if (r.success === true) return true
+  const http = httpStatusOf(res)
+  return http != null && http >= 200 && http < 300
 }
 
 function formatDue(d?: string): string {
@@ -98,14 +211,18 @@ function isTaskCreateOk(res: unknown): boolean {
   if (r.success === false) return false
   if (r.success === true || r.success === 'true') return true
   const http = httpStatusOf(res)
-  if (http === 200 || http === 201) {
-    // Created at HTTP layer — accept unless body explicitly failed
+  if (http != null && http >= 200 && http < 300) {
+    return true
+  }
+  const statusCode = r.statusCode
+  if (typeof statusCode === 'number' && statusCode >= 200 && statusCode < 300) {
     return true
   }
   if (r.data != null && typeof r.data === 'object') {
     const d = r.data as Record<string, unknown>
     if (d.task != null) return true
     if (typeof d._id === 'string' || typeof d.id === 'string') return true
+    if (typeof d.title === 'string' && d.title.length > 0) return true
     if (d._id != null && typeof d._id === 'object' && '$oid' in (d._id as object)) return true
     const inner = d.data
     if (inner != null && typeof inner === 'object' && !Array.isArray(inner)) {
@@ -118,6 +235,64 @@ function isTaskCreateOk(res: unknown): boolean {
   if (typeof r._id === 'string' && typeof r.title === 'string') return true
   if (Array.isArray(r.tasks) && r.tasks[0] != null && typeof r.tasks[0] === 'object') return true
   return false
+}
+
+function readMongoId(raw: unknown): string | null {
+  if (typeof raw === 'string' && raw.length > 0) return raw
+  if (raw != null && typeof raw === 'object' && '$oid' in (raw as object)) {
+    const o = (raw as { $oid: unknown }).$oid
+    return typeof o === 'string' && o.length > 0 ? o : null
+  }
+  return null
+}
+
+/** New task id from POST response when body is not a full task document. */
+function extractCreatedTaskId(res: unknown): string | null {
+  if (res == null || typeof res !== 'object') return null
+  const r = res as Record<string, unknown>
+  const tryBag = (bag: Record<string, unknown>): string | null =>
+    readMongoId(bag._id) ??
+    readMongoId(bag.id) ??
+    (typeof bag.insertedId === 'string' ? bag.insertedId : null) ??
+    (typeof bag.inserted_id === 'string' ? bag.inserted_id : null)
+
+  let id = tryBag(r)
+  if (id) return id
+  const data = r.data
+  if (data != null && typeof data === 'object' && !Array.isArray(data)) {
+    const d = data as Record<string, unknown>
+    id = tryBag(d)
+    if (id) return id
+    const task = d.task
+    if (task != null && typeof task === 'object' && !Array.isArray(task)) {
+      id = tryBag(task as Record<string, unknown>)
+      if (id) return id
+    }
+  }
+  return null
+}
+
+function buildOptimisticTask(
+  _id: string,
+  opts: {
+    title: string
+    description?: string
+    assignedToId: string
+    assignees: User[]
+    dueDate?: string
+    currentUser: User | null
+  }
+): Task {
+  const assignee = opts.assignees.find((u) => u._id === opts.assignedToId)
+  return {
+    _id,
+    title: opts.title,
+    description: opts.description,
+    status: TaskStatus.Pending,
+    assignedTo: assignee ?? opts.assignedToId,
+    createdBy: opts.currentUser ?? opts.assignedToId,
+    ...(opts.dueDate ? { dueDate: opts.dueDate } : {}),
+  }
 }
 
 /** Single task from POST body so we can show it immediately if GET list lags or shape differs. */
@@ -231,69 +406,79 @@ export function TasksPage(): React.ReactElement {
   const [newAssignedTo, setNewAssignedTo] = useState('')
   const [newDueDate, setNewDueDate] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  /** userId → display name for assignee column when `assignedTo` is not populated. */
+  const [assigneeNameById, setAssigneeNameById] = useState<Record<string, string>>({})
   const { addToast } = useToast()
+  const isCompactTasks = useMediaQuery('(max-width: 767px)')
 
-  const load = useCallback(() => {
-    if (!canListTasks) {
-      setList([])
-      setTotal(0)
-      setLoading(false)
-      return
-    }
-    if (authLoading || !token) {
-      setLoading(authLoading)
-      return
-    }
-    setLoading(true)
-    const listParams = { search: search || undefined, page, limit }
-    const allParams =
-      statusFilter !== ''
-        ? { ...listParams, status: statusFilter }
-        : listParams
-
-    /**
-     * GET /all-tasks: company + Admin/Manager (tenant-wide, optional status filter).
-     * GET /tasks: assignee-scoped ("my tasks") for Employees and fallback.
-     */
-    const fetchTasks = async (): Promise<unknown> => {
-      if (!seesCompanyWideTaskList) {
-        return tasksApi.list(listParams)
-      }
-      const wide = await tasksApi.all(allParams)
-      if (isTaskListOk(wide)) return wide
-      const st = (wide as { status?: number }).status
-      if (st === 404 || st === 403 || st === 501) {
-        return tasksApi.list(listParams)
-      }
-      return wide
-    }
-
-    void fetchTasks()
-      .then((res) => {
-        if (!isTaskListOk(res)) {
-          const err = res as { message?: string; status?: number }
-          const msg =
-            err.status === 401
-              ? 'Session expired or not signed in. Please sign in again.'
-              : err.message
-          if (msg) addToast(msg, 'error')
-          setList([])
-          setTotal(0)
-          return
-        }
-        const r = res as Record<string, unknown>
-        const raw = r.data !== undefined && r.data !== null ? r.data : res
-        const { tasks, total } = parseTasksListPayload(raw)
-        setList(normalizeTasksFromApi(tasks))
-        setTotal(total)
-      })
-      .catch(() => {
-        addToast('Could not load tasks.', 'error')
+  /**
+   * Refetch task list. Pass `listPage` to avoid stale closure after `setPage(1)` (e.g. right after create).
+   */
+  const load = useCallback(
+    (listPage?: number): Promise<void> => {
+      if (!canListTasks) {
         setList([])
         setTotal(0)
-      })
-      .finally(() => setLoading(false))
-  }, [canListTasks, authLoading, token, search, page, addToast, seesCompanyWideTaskList, statusFilter])
+        setLoading(false)
+        return Promise.resolve()
+      }
+      if (authLoading || !token) {
+        setLoading(authLoading)
+        return Promise.resolve()
+      }
+      setLoading(true)
+      const effectivePage = listPage !== undefined ? listPage : page
+      const listParams = { search: search || undefined, page: effectivePage, limit }
+      const allParams =
+        statusFilter !== ''
+          ? { ...listParams, status: statusFilter }
+          : listParams
+
+      /**
+       * GET /all-tasks: company + Admin/Manager (tenant-wide, optional status filter).
+       * GET /tasks: assignee-scoped ("my tasks") for Employees and fallback.
+       */
+      const fetchTasks = async (): Promise<unknown> => {
+        if (!seesCompanyWideTaskList) {
+          return tasksApi.list(listParams)
+        }
+        const wide = await tasksApi.all(allParams)
+        if (isTaskListOk(wide)) return wide
+        const st = (wide as { status?: number }).status
+        if (st === 404 || st === 403 || st === 501) {
+          return tasksApi.list(listParams)
+        }
+        return wide
+      }
+
+      return fetchTasks()
+        .then((res) => {
+          if (!isTaskListOk(res)) {
+            const err = res as { message?: string; status?: number }
+            const msg =
+              err.status === 401
+                ? 'Session expired or not signed in. Please sign in again.'
+                : err.message
+            if (msg) addToast(msg, 'error')
+            setList([])
+            setTotal(0)
+            return
+          }
+          const r = res as Record<string, unknown>
+          const raw = r.data !== undefined && r.data !== null ? r.data : res
+          const { tasks, total } = parseTasksListPayload(raw)
+          setList(normalizeTasksFromApi(tasks))
+          setTotal(total)
+        })
+        .catch(() => {
+          addToast('Could not load tasks.', 'error')
+          setList([])
+          setTotal(0)
+        })
+        .finally(() => setLoading(false))
+    },
+    [canListTasks, authLoading, token, search, page, addToast, seesCompanyWideTaskList, statusFilter, limit]
+  )
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -301,12 +486,51 @@ export function TasksPage(): React.ReactElement {
     })
   }, [load])
 
+  /** Resolve assignee ids → names (paginate `all-users`; keys use normalized Mongo id strings). */
+  useEffect(() => {
+    if (!canListTasks || authLoading || !token) return
+    let cancelled = false
+    const limit = 100
+    async function loadDirectory(): Promise<void> {
+      const merged: Record<string, string> = {}
+      for (let p = 1; p <= 40; p += 1) {
+        if (cancelled) return
+        const res = await usersApi.all({ page: p, limit })
+        const people = extractUsersList(res)
+        if (people.length === 0) break
+        Object.assign(merged, buildAssigneeDirectory(people))
+        if (people.length < limit) break
+      }
+      if (!cancelled && Object.keys(merged).length > 0) {
+        setAssigneeNameById((prev) => ({ ...prev, ...merged }))
+      }
+    }
+    void loadDirectory()
+    return () => {
+      cancelled = true
+    }
+  }, [canListTasks, authLoading, token])
+
+  /** Signed-in user may be assignee on “my tasks” — always map self id → display name. */
+  useEffect(() => {
+    if (user?._id == null) return
+    const id = mongoIdToString(user._id) || user._id
+    const label = user.fullName?.trim() || user.email?.trim() || id
+    setAssigneeNameById((prev) => ({ ...prev, [id]: label }))
+  }, [user])
+
+  /** Merge create-task assignee list so names appear even if directory fetch lags. */
+  useEffect(() => {
+    if (assignees.length === 0) return
+    const patch = buildAssigneeDirectory(assignees)
+    setAssigneeNameById((prev) => ({ ...prev, ...patch }))
+  }, [assignees])
+
   /** Load users for assignee picker (create task). */
   useEffect(() => {
     if (!panelOpen || !canCreateTasks) return
     usersApi.all({ page: 1, limit: 100 }).then((res) => {
-      const raw = res.success && res.data?.users?.length ? res.data.users : []
-      const people = raw.filter((u): u is User => u != null && u._id != null)
+      const people = extractUsersList(res)
       if (people.length > 0) {
         setAssignees(people)
         setNewAssignedTo((prev) =>
@@ -344,17 +568,48 @@ export function TasksPage(): React.ReactElement {
         addToast(getApiMessage(res) ?? 'Failed to create task', 'error')
         return
       }
+      // Close panel and stop loading first so the drawer never stays stuck if list parsing throws.
+      setSubmitting(false)
+      setPanelOpen(false)
       addToast('Task created.')
+      const titleSaved = newTitle.trim()
+      const descSaved = newDesc.trim()
+      const assignSaved = newAssignedTo
+      const dueSaved = newDueDate
       setNewTitle('')
       setNewDesc('')
       setNewDueDate('')
       setNewAssignedTo(user?._id ?? assignees[0]?._id ?? '')
-      setPanelOpen(false)
-      const created = extractTaskFromCreateResponse(res)
-      if (created) {
-        setList((prev) => (prev.some((p) => p._id === created._id) ? prev : [created, ...prev]))
+
+      let optimistic: Task | null = null
+      try {
+        optimistic = extractTaskFromCreateResponse(res)
+        if (optimistic == null) {
+          const newId = extractCreatedTaskId(res)
+          if (newId != null) {
+            optimistic = buildOptimisticTask(newId, {
+              title: titleSaved,
+              description: descSaved || undefined,
+              assignedToId: assignSaved,
+              assignees,
+              dueDate: dueSaved ? `${dueSaved}T12:00:00.000Z` : undefined,
+              currentUser: user,
+            })
+          }
+        }
+        if (optimistic != null) {
+          setList((prev) => (prev.some((p) => p._id === optimistic!._id) ? prev : [optimistic!, ...prev]))
+        }
+      } catch {
+        // Refetch below
       }
-      void load()
+
+      // New tasks usually land on page 1; `void load()` used stale `page` from closure (e.g. page 2 → missing row).
+      setPage(1)
+      await load(1)
+      if (optimistic != null) {
+        setList((prev) => (prev.some((p) => p._id === optimistic!._id) ? prev : [optimistic!, ...prev]))
+      }
     } catch {
       addToast('Could not create task. Check your connection.', 'error')
     } finally {
@@ -362,14 +617,23 @@ export function TasksPage(): React.ReactElement {
     }
   }
 
-  function handleStatusChange(task: Task, status: Task['status']): void {
-    if (status === task.status) return
-    tasksApi.update(task._id, { status }).then((res) => {
-      if (res.success) {
+  function handleStatusAdvance(task: Task): void {
+    const next = nextTaskStatus(task.status)
+    if (next == null) return
+    const cur = normalizeTaskStatus(task.status)
+    const curIdx = STATUS_ORDER.indexOf(cur)
+    const newIdx = STATUS_ORDER.indexOf(next)
+    if (newIdx !== curIdx + 1) {
+      addToast('Status can only move forward.', 'error')
+      return
+    }
+    tasksApi.update(task._id, { status: next }).then((res) => {
+      if (isTaskUpdateOk(res)) {
         addToast('Task updated.')
-        load()
+        setList((prev) => prev.map((t) => (t._id === task._id ? { ...t, status: next } : t)))
+        void load()
       } else {
-        addToast((res as { message: string }).message ?? 'Failed', 'error')
+        addToast(getApiMessage(res) ?? 'Failed to update status', 'error')
       }
     })
   }
@@ -384,7 +648,11 @@ export function TasksPage(): React.ReactElement {
   const taskColumns = [
     { key: 'title', header: 'Title', render: (r: Task) => r.title },
     { key: 'description', header: 'Description', render: (r: Task) => r.description ?? '—' },
-    { key: 'assignedTo', header: 'Assigned to', render: (r: Task) => userLabel(r.assignedTo) },
+    {
+      key: 'assignedTo',
+      header: 'Assigned to',
+      render: (r: Task) => assigneeCellLabel(r, assigneeNameById),
+    },
     ...(seesCompanyWideTaskList
       ? [{ key: 'createdBy', header: 'Created by', render: (r: Task) => createdByLabel(r) }]
       : []),
@@ -392,25 +660,27 @@ export function TasksPage(): React.ReactElement {
     {
       key: 'status',
       header: 'Status',
-      render: (r: Task) =>
-        canEditStatus(r) ? (
-          <select
-            aria-label="Change task status"
-            className={selectClassName}
-            value={r.status}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-              handleStatusChange(r, e.target.value as Task['status'])
-            }
-          >
-            {statusOptions.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <span className="font-body text-sm text-[var(--app-text)]">{r.status}</span>
-        ),
+      render: (r: Task) => {
+        const label = normalizeTaskStatus(r.status)
+        const next = nextTaskStatus(r.status)
+        const canAdvance = canEditStatus(r) && next != null
+        return (
+          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+            <span className="font-body text-sm text-[var(--app-text)]">{r.status}</span>
+            {canAdvance ? (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="shrink-0"
+                onClick={() => handleStatusAdvance(r)}
+              >
+                {label === TaskStatus.Pending ? 'Start task' : 'Mark complete'}
+              </Button>
+            ) : null}
+          </div>
+        )
+      },
     },
   ]
 
@@ -475,6 +745,93 @@ export function TasksPage(): React.ReactElement {
             <div className="flex justify-center py-24">
               <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--app-border)] border-t-[var(--app-text)]" />
             </div>
+          ) : isCompactTasks ? (
+            <>
+              {list.length === 0 ? (
+                <div className="px-4 py-14 text-center font-body text-sm text-[var(--app-muted)] sm:py-10 sm:text-base">
+                  {seesCompanyWideTaskList ? 'No tasks yet' : 'No tasks assigned to you'}
+                </div>
+              ) : (
+                <div className="w-full min-w-0 divide-y divide-[var(--app-border)]">
+                  {list.map((task) => {
+                    const stLabel = normalizeTaskStatus(task.status)
+                    const nextSt = nextTaskStatus(task.status)
+                    const canAdvance = canEditStatus(task) && nextSt != null
+                    return (
+                      <article key={task._id} className="px-4 py-4">
+                        <div className="space-y-1">
+                          <p className="font-body text-[10px] font-semibold uppercase tracking-wider text-[var(--app-muted)]">
+                            Title
+                          </p>
+                          <p className="font-body text-sm font-medium text-[var(--app-text)]">{task.title}</p>
+                        </div>
+                        <div className="mt-3 space-y-1">
+                          <p className="font-body text-[10px] font-semibold uppercase tracking-wider text-[var(--app-muted)]">
+                            Description
+                          </p>
+                          <p className="break-words font-body text-sm text-[var(--app-muted)]">
+                            {task.description ?? '—'}
+                          </p>
+                        </div>
+                        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div>
+                            <p className="font-body text-[10px] font-semibold uppercase tracking-wider text-[var(--app-muted)]">
+                              Assigned to
+                            </p>
+                            <p className="break-words font-body text-sm text-[var(--app-text)]">
+                              {assigneeCellLabel(task, assigneeNameById)}
+                            </p>
+                          </div>
+                          {seesCompanyWideTaskList ? (
+                            <div>
+                              <p className="font-body text-[10px] font-semibold uppercase tracking-wider text-[var(--app-muted)]">
+                                Created by
+                              </p>
+                              <p className="break-words font-body text-sm text-[var(--app-text)]">
+                                {createdByLabel(task)}
+                              </p>
+                            </div>
+                          ) : null}
+                          <div>
+                            <p className="font-body text-[10px] font-semibold uppercase tracking-wider text-[var(--app-muted)]">
+                              Due
+                            </p>
+                            <p className="font-body text-sm text-[var(--app-text)]">{formatDue(task.dueDate)}</p>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex flex-col gap-2 border-t border-[var(--app-border)] pt-3 sm:flex-row sm:flex-wrap sm:items-center">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-body text-xs text-[var(--app-muted)]">Status</span>
+                            <span className="font-body text-sm font-medium text-[var(--app-text)]">{task.status}</span>
+                          </div>
+                          {canAdvance ? (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="w-full shrink-0 sm:w-auto"
+                              onClick={() => handleStatusAdvance(task)}
+                            >
+                              {stLabel === TaskStatus.Pending ? 'Start task' : 'Mark complete'}
+                            </Button>
+                          ) : null}
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+              )}
+              {totalPages > 1 && (
+                <div className="border-t border-[var(--app-border)] p-4">
+                  <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    onPrev={() => setPage((p) => Math.max(1, p - 1))}
+                    onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  />
+                </div>
+              )}
+            </>
           ) : (
             <>
               <DataTable<Task>

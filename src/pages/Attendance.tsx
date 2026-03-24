@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { DataTable } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 function defaultAttendanceRange(): { from: string; to: string } {
   const to = new Date()
@@ -118,8 +119,13 @@ function userSortKey(r: AttendanceRecord): string {
   return String(r.user ?? '')
 }
 
+function attendanceRowKey(r: AttendanceRecord, index: number): string {
+  return r._id != null && String(r._id).trim() !== '' ? String(r._id) : `att-${index}`
+}
+
 export function AttendancePage(): React.ReactElement {
   const { accountType, user } = useAuth()
+  const isCompactAttendance = useMediaQuery('(max-width: 767px)')
   /** Company JWT or Admin/Manager → GET /record-all (all employees in tenant). */
   const canSeeAllAttendance = accountType === 'company' || isAdminOrManagerRole(user?.role)
   const isEmployee = accountType === 'user' && isEmployeeRole(user?.role)
@@ -310,6 +316,59 @@ export function AttendancePage(): React.ReactElement {
           <div className="flex min-h-[200px] items-center justify-center py-16 sm:min-h-0 sm:py-24">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--app-border)] border-t-[var(--app-text)]" />
           </div>
+        ) : isCompactAttendance ? (
+          records.length === 0 ? (
+            <div className="px-4 py-14 text-center font-body text-sm text-[var(--app-muted)] sm:py-10 sm:text-base">
+              {canSeeAllAttendance ? 'No attendance records in this range' : 'No records'}
+            </div>
+          ) : (
+            <div className="w-full min-w-0 divide-y divide-[var(--app-border)]">
+              {records.map((r, index) => (
+                <article key={attendanceRowKey(r, index)} className="px-4 py-4">
+                  <div className="space-y-1">
+                    <p className="font-body text-[10px] font-semibold uppercase tracking-wider text-[var(--app-muted)]">
+                      Date
+                    </p>
+                    <p className="font-body text-sm font-medium text-[var(--app-text)]">{formatRecordDate(r.date)}</p>
+                  </div>
+                  {canSeeAllAttendance ? (
+                    <div className="mt-3 space-y-1">
+                      <p className="font-body text-[10px] font-semibold uppercase tracking-wider text-[var(--app-muted)]">
+                        User
+                      </p>
+                      <p className="break-words font-body text-sm text-[var(--app-text)]">{userName(r)}</p>
+                    </div>
+                  ) : null}
+                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="font-body text-[10px] font-semibold uppercase tracking-wider text-[var(--app-muted)]">
+                        Check-in
+                      </p>
+                      <p className="font-body text-sm text-[var(--app-text)]">
+                        {canSeeAllAttendance ? formatAttendanceTime(r.checkIn) : formatTimeOnly(r.checkIn)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-body text-[10px] font-semibold uppercase tracking-wider text-[var(--app-muted)]">
+                        Check-out
+                      </p>
+                      <p className="font-body text-sm text-[var(--app-text)]">
+                        {canSeeAllAttendance ? formatAttendanceTime(r.checkOut) : formatTimeOnly(r.checkOut)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <p className="font-body text-[10px] font-semibold uppercase tracking-wider text-[var(--app-muted)]">
+                      Status
+                    </p>
+                    <div className="mt-1">
+                      {r.status ? <StatusBadge status={r.status} /> : <span className="font-body text-sm text-[var(--app-muted)]">—</span>}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )
         ) : (
           <DataTable<AttendanceRecord>
             columns={canSeeAllAttendance ? adminColumns : employeeColumns}

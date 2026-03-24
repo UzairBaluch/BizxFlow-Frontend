@@ -169,3 +169,29 @@ export type Announcement = {
   updatedAt?: string;
 };
 export type CreateAnnouncementBody = { title: string; body: string };
+
+/** Push + list payloads; `metadata` holds deep-link ids (`taskId`, `leaveId`, `announcementId`, …). */
+export const IN_APP_NOTIFICATION_TYPES = [
+  'TASK_ASSIGNED',
+  'LEAVE_SUBMITTED',
+  'LEAVE_APPROVED',
+  'LEAVE_REJECTED',
+  'ANNOUNCEMENT_CREATED',
+] as const;
+export type InAppNotificationMetadata = {
+  taskId?: string;
+  leaveId?: string;
+  announcementId?: string;
+  [key: string]: unknown;
+};
+
+export type InAppNotification = {
+  _id: string;
+  type: string;
+  title: string;
+  body: string;
+  read: boolean;
+  metadata?: InAppNotificationMetadata;
+  createdAt?: string;
+  updatedAt?: string;
+};
