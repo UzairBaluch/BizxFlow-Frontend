@@ -10,7 +10,7 @@ React + TypeScript + Vite frontend for **BizxFlow**: team productivity and workf
 - **Dashboard** — Overview, stats, and quick actions
 - **Attendance** — Clock in/out and attendance history
 - **Tasks** — Create, assign, and track tasks
-- **Leave** — Request and manage leave (admin/manager approval)
+- **Leave** — Request and manage leave (company/manager approval)
 
 ### Collaboration & communication
 - **Meetings** — Schedule and view meetings
@@ -25,7 +25,7 @@ React + TypeScript + Vite frontend for **BizxFlow**: team productivity and workf
 - **Mood Check-in** — Daily mood tracking
 - **End-of-Day Report** — End-of-day summary and reporting
 
-### Management (admin/manager)
+### Management (company account / manager users)
 - **Users** — User management and roles
 
 ### Account
@@ -79,7 +79,7 @@ Output is in `dist/`.
 | `/tasks` | Tasks |
 | `/leave` | Leave |
 | `/attendance` | Attendance |
-| `/users` | User management (admin/manager) |
+| `/users` | User management (company / manager) |
 | `/meetings` | Meetings |
 | `/chat` | Team Chat |
 | `/briefing` | AI Briefing |

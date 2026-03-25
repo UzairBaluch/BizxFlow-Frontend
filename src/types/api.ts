@@ -1,7 +1,8 @@
 /**
  * API types. Auth model (company vs user): see docs/AUTH_MODEL.md.
  */
-export type Role = 'Admin' | 'Manager' | 'Employee';
+/** User JWT roles only. `Admin` is not used — backend uses Manager | Employee. */
+export type Role = 'Manager' | 'Employee';
 
 export type AccountType = 'company' | 'user';
 
@@ -78,7 +79,7 @@ export type Task = {
   status: TaskStatus;
   assignedTo: string | User;
   createdBy: string | User;
-  /** Populated on GET /all-tasks for admin/company UIs */
+  /** Populated on GET /all-tasks for manager/company UIs */
   createdByCompany?: string | Pick<Company, 'companyName'>;
   dueDate?: string;
   createdAt?: string;
@@ -113,7 +114,7 @@ export type LeaveRequest = {
   leaveType?: string;
   reason?: string;
   status: LeaveStatus;
-  /** Set when a user (Admin/Manager) approved/rejected */
+  /** Set when a user (e.g. Manager) approved/rejected */
   reviewedBy?: string | User | null;
   /** Set when the company account approved/rejected */
   reviewedByCompany?: string | Company | null;
@@ -130,7 +131,7 @@ export type UpdateLeaveBody = { status: LeaveReviewStatus };
 // Dashboard
 export type DashboardData = {
   /**
-   * All user accounts in the tenant (Admin + Manager + Employee). Excludes the company login entity.
+   * All user accounts in the tenant (Manager + Employee). Excludes the company login entity.
    * Prefer this over `totalEmployees` when the API provides it.
    */
   totalTeamMembers?: number;
@@ -146,9 +147,9 @@ export type DashboardData = {
   leavesByStatus?: { _id: LeaveStatus; count: number }[];
 };
 
-// Add user (company or Admin/Manager)
+// Add user (company or Manager)
 export type AddUserBody = { fullName: string; email: string; password: string; role?: Role };
-/** PATCH update-user-role/:userId — company JWT or Admin/Manager */
+/** PATCH update-user-role/:userId — company JWT or Manager */
 export type UpdateUserRoleBody = { role: Role };
 
 // Paginated

@@ -17,7 +17,7 @@ const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   },
   {
     q: 'Can I add employees to my company?',
-    a: 'Yes. Company admins/managers can add users via the “Add user” flow. Each employee is associated with your company.',
+    a: 'Yes. Your company account or managers can add users via the “Add user” flow. Each employee is associated with your company.',
   },
   {
     q: 'How does attendance check-in/check-out work?',

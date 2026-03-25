@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { tasks as tasksApi, users as usersApi } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
+import { isManagerRole } from '@/lib/authAccess'
 import { useToast } from '@/context/ToastContext'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { Task, User } from '@/types/api'
@@ -384,12 +385,12 @@ export function TasksPage(): React.ReactElement {
   const { user, accountType, token, loading: authLoading } = useAuth()
   /** GET /tasks — everyone signed in as a user can list; company account too. Tenant scope is inferred from JWT on the server (do not send `scope=all` unless your API documents it — production returned 401). */
   const canListTasks = (accountType === 'user' && !!user) || accountType === 'company'
-  /** POST /tasks — company or Admin/Manager user. */
+  /** POST /tasks — company or Manager user. */
   const canCreateTasks =
-    accountType === 'company' || user?.role === 'Admin' || user?.role === 'Manager'
-  /** Tenant-wide task list (same idea as company dashboard): company JWT or Admin/Manager user. */
+    accountType === 'company' || isManagerRole(user?.role)
+  /** Tenant-wide task list (same idea as company dashboard): company JWT or Manager user. */
   const seesCompanyWideTaskList =
-    accountType === 'company' || user?.role === 'Admin' || user?.role === 'Manager'
+    accountType === 'company' || isManagerRole(user?.role)
 
   const [list, setList] = useState<Task[]>([])
   const [total, setTotal] = useState(0)
@@ -435,7 +436,7 @@ export function TasksPage(): React.ReactElement {
           : listParams
 
       /**
-       * GET /all-tasks: company + Admin/Manager (tenant-wide, optional status filter).
+       * GET /all-tasks: company + Manager (tenant-wide, optional status filter).
        * GET /tasks: assignee-scoped ("my tasks") for Employees and fallback.
        */
       const fetchTasks = async (): Promise<unknown> => {

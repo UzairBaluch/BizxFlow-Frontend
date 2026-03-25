@@ -7,7 +7,7 @@ const NAV: { path: string; label: string; roles?: Role[] }[] = [
   { path: '/tasks', label: 'Tasks' },
   { path: '/leave', label: 'Leave' },
   { path: '/attendance', label: 'Attendance' },
-  { path: '/users', label: 'Users', roles: ['Admin'] },
+  { path: '/users', label: 'Users', roles: ['Manager'] },
   { path: '/profile', label: 'Profile' },
 ];
 

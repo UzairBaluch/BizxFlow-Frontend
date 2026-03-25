@@ -108,7 +108,7 @@ const ALL_FEATURES = [
   { title: 'AI Daily Briefing', description: "Your team's day summarized in plain English, every morning.", icon: Sunrise, span: '' },
   { title: 'Natural Language Tasks', description: 'Type "remind Ahmed to submit report by Friday" and it\'s done.', icon: MessageSquare, span: '' },
   { title: 'Performance Insights', description: 'Auto-scored employee performance based on real activity.', icon: BarChart3, span: '' },
-  { title: 'Role-Based Access', description: 'Admins, Managers, and Employees each see exactly what they need.', icon: Shield, span: 'sm:col-span-2' },
+  { title: 'Role-Based Access', description: 'Company account, Managers, and Employees each see exactly what they need.', icon: Shield, span: 'sm:col-span-2' },
   { title: 'Instant Notifications', description: 'Email alerts for every task, leave, and approval.', icon: Bell, span: '' },
   { title: 'Team Dashboard', description: 'Everything that matters, in one view.', icon: LayoutDashboard, span: '' },
   { title: 'Powerful Search', description: 'Find any employee, task, or record instantly.', icon: Search, span: '' },
@@ -116,7 +116,7 @@ const ALL_FEATURES = [
   { title: 'Team Chat', description: 'Real-time messaging with channels per team or department.', icon: MessageCircle, span: '' },
   { title: 'Meeting Scheduler', description: 'Book, manage, and track team meetings with automatic reminders.', icon: Video, span: '' },
   { title: 'Meeting Notes', description: 'AI summarizes your meeting into action items automatically.', icon: FileText, span: '' },
-  { title: 'Announcements', description: 'Broadcast company-wide updates from Admin in one place.', icon: Megaphone, span: '' },
+  { title: 'Announcements', description: 'Broadcast company-wide updates from your team leads in one place.', icon: Megaphone, span: '' },
   { title: 'Community Posts', description: 'Employees and teams can post updates, share ideas, and have a shared feed.', icon: Newspaper, span: 'sm:col-span-2' },
   { title: 'Mood Check-in', description: 'Employees rate their day anonymously, managers see team morale trends.', icon: Smile, span: '' },
   { title: 'AI Workload Balancer', description: 'Flags when one employee is overloaded compared to the rest of the team.', icon: Scale, span: 'sm:col-span-2' },
@@ -137,7 +137,7 @@ const CLIENT_REVIEWS = [
 /** Community posts — bento (span for featured/larger) */
 const COMMUNITY_POSTS = [
   { title: 'How we cut standup time by 40% with AI briefings', author: 'TechFlow', date: 'Mar 10', category: 'Product', excerpt: 'Our team tried the daily briefing for two weeks. Here’s what changed.', span: 'sm:col-span-2' },
-  { title: 'Setting up role-based access in 15 minutes', author: 'BizxFlow', date: 'Mar 8', category: 'Guide', excerpt: 'Step-by-step: Admin, Manager, and Employee roles with the right permissions.', span: '' },
+  { title: 'Setting up role-based access in 15 minutes', author: 'BizxFlow', date: 'Mar 8', category: 'Guide', excerpt: 'Step-by-step: company signup, Manager and Employee roles with the right permissions.', span: '' },
   { title: 'Why we moved from spreadsheets to BizxFlow', author: 'ScaleUp', date: 'Mar 5', category: 'Story', excerpt: 'HR was drowning in sheets. One platform fixed it.', span: '' },
   { title: 'API tips: webhooks for leave and tasks', author: 'DevHouse', date: 'Mar 3', category: 'Technical', excerpt: 'Sync leave and tasks into your own tools with a few endpoints.', span: 'sm:col-span-2' },
   { title: 'Best practices for remote attendance', author: 'Community', date: 'Mar 1', category: 'Tips', excerpt: 'Clock-in policies that actually work for distributed teams.', span: '' },

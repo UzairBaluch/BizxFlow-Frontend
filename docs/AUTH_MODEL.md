@@ -2,25 +2,25 @@
 
 ## Two account types
 
-- **Company** – Created by `POST /api/v1/users/register` (email, password, companyName, optional logo). This is the “company account.” It is not a row in the User collection. Login returns `type: "company"` and a company object. In the UI, **company is treated like the first user / admin**: same sidebar (Main, Features, Management, Account) and same Dashboard when the dashboard API supports company tokens; otherwise a welcome card is shown.
-- **User** – Created by `POST /api/v1/users/add-user` (by company or Admin/Manager). These are employees. Each has companyId and appears in the users list.
+- **Company** – Created by `POST /api/v1/users/register` (email, password, companyName, optional logo). This is the “company account.” It is not a row in the User collection. Login returns `type: "company"` and a company object. In the UI, **company** is the org owner: full access, fixed ceiling (not permission-gated).
+- **User** – Created by `POST /api/v1/users/add-user` (by **company** or **Manager**). Roles are **`Manager`** or **`Employee`** only (there is no **`Admin`** user role). Each has `companyId` and appears in the users list.
 
 ## Users list (e.g. “Company users” page)
 
-`GET /api/v1/users/all-users` returns only **user accounts (employees)** for that company. The company account is not and will not appear in this list. So:
+`GET /api/v1/users/all-users` returns only **user accounts** for that company. The company account is not and will not appear in this list. So:
 
-- One row (e.g. Ramees) = one user you added; that’s correct.
+- One row = one user you added; that’s correct.
 - The company (the logged-in company account) is not “missing”; it’s simply not shown in this table by design.
 
 ## Who can add users / see dashboard
 
-- **Dashboard** and **Add user** (Users list) are for **company**, **Admin**, and **Manager** only. **Employees** do not see Dashboard in the sidebar and see an “Access restricted” message if they open the dashboard or users page.
-- **Company** (logged in as company) or a user with role **Admin** or **Manager** can call add-user and view the users list.
+- **Dashboard** and **Add user** (Users list) are for **company** or **Manager** only. **Employees** do not see Dashboard in the sidebar and see an “Access restricted” message if they open the dashboard or users page.
+- **Company** (logged in as company) or a user with role **Manager** can call add-user and view the users list.
 - Users with role **Employee** cannot.
 
 ## Backend endpoints (summary)
 
-- **Add-user:** `POST /api/v1/users/add-user` (auth required; body: fullName, email, password, role; optional picture). New users can log in immediately.
+- **Add-user:** `POST /api/v1/users/add-user` (auth required; body: fullName, email, password, role `Manager` | `Employee`; optional picture). New users can log in immediately.
 - **Register** is company signup only (not user self-signup).
 - **Login** is one endpoint; it returns either company or user and `type: "company"` or `type: "user"`.
 
@@ -33,3 +33,5 @@ Use this (or equivalent) on the Company users page:
 ## Multi-tenancy
 
 Data is scoped by company. For who can call company-wide endpoints (all-users, record-all, all-leaves, etc.) and the backend rollout status, see [MULTI_TENANCY.md](./MULTI_TENANCY.md).
+
+See also: [FRONTEND_API_SUMMARY.md](./FRONTEND_API_SUMMARY.md).

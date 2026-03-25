@@ -1,17 +1,20 @@
 import type { AccountType, User } from '@/types/api'
 
-/** Case-insensitive role check (API may vary casing). */
-export function isAdminOrManagerRole(role: string | undefined): boolean {
+/** Case-insensitive: Manager only. Legacy API `Admin` is treated as Manager. */
+export function isManagerRole(role: string | undefined): boolean {
   if (role == null) return false
   const r = role.trim().toLowerCase()
-  return r === 'admin' || r === 'manager'
+  return r === 'manager' || r === 'admin'
 }
 
-/** Company JWT or Admin/Manager user — matches GET /dashboard access. */
+/** @deprecated Use `isManagerRole` */
+export const isAdminOrManagerRole = isManagerRole
+
+/** Company JWT or Manager user — matches GET /dashboard access. */
 export function canAccessDashboard(accountType: AccountType | null, user: User | null): boolean {
   if (accountType === 'company') return true
   if (accountType === 'user' && user != null) {
-    return isAdminOrManagerRole(user.role)
+    return isManagerRole(user.role)
   }
   return false
 }

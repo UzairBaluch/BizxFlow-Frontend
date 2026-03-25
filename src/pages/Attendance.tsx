@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { DataTable } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { isManagerRole } from '@/lib/authAccess'
 
 function defaultAttendanceRange(): { from: string; to: string } {
   const to = new Date()
@@ -68,13 +69,6 @@ function formatRecordDate(dateStr: string): string {
   }
 }
 
-/** Match API role strings that may vary in casing/spacing */
-function isAdminOrManagerRole(role: string | undefined): boolean {
-  if (role == null) return false
-  const r = role.trim().toLowerCase()
-  return r === 'admin' || r === 'manager'
-}
-
 function isEmployeeRole(role: string | undefined): boolean {
   if (role == null) return false
   return role.trim().toLowerCase() === 'employee'
@@ -106,7 +100,7 @@ function parseAttendanceRecordsFromResponse(res: unknown): AttendanceRecord[] {
   return []
 }
 
-function sortAttendanceForAdminView(a: AttendanceRecord, b: AttendanceRecord): number {
+function sortAttendanceCompanyView(a: AttendanceRecord, b: AttendanceRecord): number {
   const da = recordDateKey(a.date).localeCompare(recordDateKey(b.date))
   if (da !== 0) return -da
   return userSortKey(a).localeCompare(userSortKey(b))
@@ -126,8 +120,8 @@ function attendanceRowKey(r: AttendanceRecord, index: number): string {
 export function AttendancePage(): React.ReactElement {
   const { accountType, user } = useAuth()
   const isCompactAttendance = useMediaQuery('(max-width: 767px)')
-  /** Company JWT or Admin/Manager → GET /record-all (all employees in tenant). */
-  const canSeeAllAttendance = accountType === 'company' || isAdminOrManagerRole(user?.role)
+  /** Company JWT or Manager → GET /record-all (all employees in tenant). */
+  const canSeeAllAttendance = accountType === 'company' || isManagerRole(user?.role)
   const isEmployee = accountType === 'user' && isEmployeeRole(user?.role)
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -143,7 +137,7 @@ export function AttendancePage(): React.ReactElement {
         if (isAttendanceListOk(res)) {
           let list = parseAttendanceRecordsFromResponse(res)
           if (canSeeAllAttendance) {
-            list = [...list].sort(sortAttendanceForAdminView)
+            list = [...list].sort(sortAttendanceCompanyView)
           }
           setRecords(list)
         } else {
@@ -249,7 +243,7 @@ export function AttendancePage(): React.ReactElement {
     },
   ]
 
-  const adminColumns = [
+  const companyWideColumns = [
     { key: 'date', header: 'Date', render: (r: AttendanceRecord) => formatRecordDate(r.date) },
     { key: 'user', header: 'User', render: (r: AttendanceRecord) => userName(r) },
     {
@@ -371,7 +365,7 @@ export function AttendancePage(): React.ReactElement {
           )
         ) : (
           <DataTable<AttendanceRecord>
-            columns={canSeeAllAttendance ? adminColumns : employeeColumns}
+            columns={canSeeAllAttendance ? companyWideColumns : employeeColumns}
             data={records}
             keyExtractor={(r) => r._id}
             emptyMessage={canSeeAllAttendance ? 'No attendance records in this range' : 'No records'}

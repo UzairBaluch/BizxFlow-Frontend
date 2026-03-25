@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { leave as leaveApi } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
-import { isAdminOrManagerRole } from '@/lib/authAccess'
+import { isManagerRole } from '@/lib/authAccess'
 import { isLeavesListOk, parseLeavesFromResponse } from '@/lib/leaveListParse'
 import type { LeaveRequest, LeaveReviewStatus, LeaveTypeSubmit } from '@/types/api'
 import { displayLeaveStatus, isLeavePending } from '@/lib/leaveStatus'
@@ -119,10 +119,10 @@ export function LeavePage(): React.ReactElement {
   const { user, accountType } = useAuth()
   const isCompany = accountType === 'company'
   const isUser = accountType === 'user'
-  const isAdminOrManager = isUser && isAdminOrManagerRole(user?.role)
+  const isManager = isUser && isManagerRole(user?.role)
 
-  /** Company JWT or Admin/Manager user: full list + approve/reject (PATCH /update-leave/:id). */
-  const canManageTeamLeaves = isCompany || isAdminOrManager
+  /** Company JWT or Manager user: full list + approve/reject (PATCH /update-leave/:id). */
+  const canManageTeamLeaves = isCompany || isManager
   /** Only user accounts (not company) may call my-leaves / submit-leave */
   const canUseEmployeeLeave = isUser && !!user
 
@@ -171,7 +171,7 @@ export function LeavePage(): React.ReactElement {
       return
     }
 
-    if (isAdminOrManager) {
+    if (isManager) {
       Promise.all([leaveApi.myLeaves(), leaveApi.allLeaves()])
         .then(([myRes, allRes]) => {
           applyMy(myRes)
@@ -195,7 +195,7 @@ export function LeavePage(): React.ReactElement {
     setMyLeaves([])
     setAllLeaves([])
     setLoading(false)
-  }, [isCompany, isUser, isAdminOrManager, addToast])
+  }, [isCompany, isUser, isManager, addToast])
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -309,7 +309,7 @@ export function LeavePage(): React.ReactElement {
         </Card>
       ) : (
         <>
-          {isAdminOrManager && (
+          {isManager && (
             <section className="min-w-0 space-y-3">
               <h2 className="font-display text-lg font-semibold text-[var(--app-text)]">My leave</h2>
               <Card className="min-w-0 overflow-hidden p-0">
@@ -344,7 +344,7 @@ export function LeavePage(): React.ReactElement {
             </section>
           )}
 
-          {isUser && !isAdminOrManager && (
+          {isUser && !isManager && (
             <Card className="min-w-0 overflow-hidden p-0">
               <DataTable<LeaveRequest>
                 columns={myTableColumns}

@@ -2,7 +2,7 @@ import type { TaskStatus } from './task.types'
 import type { LeaveStatus } from './leave.types'
 
 export interface DashboardStats {
-  /** User accounts only (Admin, Manager, Employee); not the company account. */
+  /** User accounts only (Manager, Employee); not the company account. */
   totalTeamMembers?: number
   totalEmployees?: number
   totalUsers?: number

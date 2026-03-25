@@ -4,11 +4,11 @@ Data is scoped by company. Each company only sees its own records. The backend u
 
 ## Who can see company-wide lists
 
-Same rule everywhere: **Company** (account type) or **Admin** or **Manager** (user role). **Employee** cannot.
+Same rule everywhere: **Company** (account type) or **Manager** (user role). **Employee** cannot.
 
-- **Dashboard** – Company, Admin, Manager only (Employee sees “Access restricted”).
-- **Users list / Add user** – Company, Admin, Manager only.
-- **All attendance** (`record-all`) – Company, Admin, Manager only.
+- **Dashboard** – Company, Manager only (Employee sees “Access restricted”).
+- **Users list / Add user** – Company, Manager only.
+- **All attendance** (`record-all`) – Company, Manager only.
 - **All leaves** (when backend is ready) – same.
 - **Tasks, Announcements, Dashboard data** (when backend is ready) – same; same endpoints, backend scopes by company.
 
@@ -22,17 +22,17 @@ Login returns `type: "company"` or `type: "user"`. Use that (and `user.role` whe
 - “Add user”, Users page
 - Dashboard
 
-Company and Admin/Manager see company-wide lists; Employee sees only their own (e.g. my record, my leaves, my tasks).
+Company and Manager see company-wide lists; Employee sees only their own (e.g. my record, my leaves, my tasks).
 
 ## Backend status (for reference)
 
 ### Done
 
 - **Attendance**
-  - **Check-in** – Employee only. No request/response change; backend stores `companyId` on the record.
+  - **Check-in** – Employee-only self-service UI; no request/response change; backend stores `companyId` on the records.
   - **Check-out** – Unchanged.
   - **My record** (`check-record`) – Unchanged (“my” attendance by date range).
-  - **All attendance** (`record-all`) – Who can call: Company or Admin/Manager. Response: only that company’s attendance (same shape). Frontend uses same rule and list UI.
+  - **All attendance** (`record-all`) – Who can call: Company or Manager. Response: only that company’s attendance (same shape). Frontend uses same rule and list UI.
 
 ### Coming next
 
@@ -40,11 +40,11 @@ Leave, then Task, then Announcements, then Dashboard will be scoped by company t
 
 ## Frontend checklist
 
-- [x] Attendance: `record-all` only for Company / Admin / Manager; check-in/out UI only for Employee.
-- [x] Users / Add user: Company, Admin, Manager only.
-- [x] Dashboard: Company, Admin, Manager only.
+- [x] Attendance: `record-all` only for Company / Manager; check-in/out UI only for Employee.
+- [x] Users / Add user: Company, Manager only.
+- [x] Dashboard: Company, Manager only.
 - [ ] Leave: when backend is ready, use same rule for “all leaves” if present.
 - [ ] Tasks: when backend is ready, same endpoints, backend scopes by company.
 - [ ] Announcements / Dashboard: same.
 
-See also: [AUTH_MODEL.md](./AUTH_MODEL.md).
+See also: [AUTH_MODEL.md](./AUTH_MODEL.md), [FRONTEND_API_SUMMARY.md](./FRONTEND_API_SUMMARY.md).

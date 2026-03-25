@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { announcements as announcementsApi } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
+import { isManagerRole } from '@/lib/authAccess'
 import { useToast } from '@/context/ToastContext'
 import type { Announcement } from '@/types/api'
 import { Card, CardTitle } from '@/components/ui/Card'
@@ -22,7 +23,7 @@ export function AnnouncementsPage(): React.ReactElement {
   const { user, accountType } = useAuth()
   const { addToast } = useToast()
   const canCreate =
-    accountType === 'company' || user?.role === 'Admin' || user?.role === 'Manager'
+    accountType === 'company' || isManagerRole(user?.role)
 
   const [list, setList] = useState<Announcement[]>([])
   const [loading, setLoading] = useState(true)

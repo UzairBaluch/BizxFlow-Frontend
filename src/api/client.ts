@@ -170,7 +170,7 @@ export const users = {
     });
   },
   /**
-   * Change a user’s role (tenant-scoped). **Company JWT** or **Admin/Manager** user.
+   * Change a user’s role (tenant-scoped). **Company JWT** or **Manager** user.
    * Backend route (expected): `PATCH /update-user-role/:userId` body `{ role }`.
    */
   updateRole: (userId: string, body: import('../types/api').UpdateUserRoleBody) =>
@@ -179,7 +179,7 @@ export const users = {
       body: JSON.stringify(body),
     }),
   /**
-   * Remove a user from the company. **Company JWT** or **Admin/Manager** user.
+   * Remove a user from the company. **Company JWT** or **Manager** user.
    * Backend route (expected): `DELETE /delete-user/:userId`.
    */
   deleteUser: (userId: string) =>
@@ -223,7 +223,7 @@ export const attendance = {
       `/api/v1/users/check-record${q ? `?${q}` : ''}`
     );
   },
-  /** Company or Admin/Manager — optional `from` / `to`. */
+  /** Company or Manager — optional `from` / `to`. */
   allRecords: (params?: { from?: string; to?: string }) => {
     const sp = new URLSearchParams();
     if (params?.from) sp.set('from', params.from);
@@ -239,7 +239,7 @@ export const attendance = {
 export const tasks = {
   /**
    * Assignee-scoped list (OpenAPI: "My assigned tasks", user JWT).
-   * Admin/Manager see only tasks assigned to themselves unless backend also widens this route.
+   * Managers see only tasks assigned to themselves unless backend also widens this route.
    */
   list: (params?: { search?: string; page?: number; limit?: number }) => {
     const sp = new URLSearchParams();
@@ -252,7 +252,7 @@ export const tasks = {
     );
   },
   /**
-   * Company-wide task list (mirror `all-leaves`). **Company JWT** or **Admin/Manager**.
+   * Company-wide task list (mirror `all-leaves`). **Company JWT** or **Manager**.
    * Response `data`: `{ tasks, totalTasks, page, limit }` (ApiResponse wrapper).
    * Optional `status`: Pending | In Progress | Done (case as backend expects).
    */
@@ -297,6 +297,7 @@ export const announcements = {
 
 /**
  * In-app notifications (**user JWT only** — not company). History + read state via REST; Socket.io pushes new rows.
+ * **Which users get a notification** for check-in/out, leave, task status, etc. is server-side; see `docs/API_INTEGRATION.md` → *Who receives in-app / company notifications*.
  * If `markRead` path differs on your server, adjust here to match OpenAPI.
  */
 export const notifications = {

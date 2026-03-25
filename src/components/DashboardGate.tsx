@@ -4,7 +4,7 @@ import { canAccessDashboard } from '@/lib/authAccess'
 
 /**
  * Employees cannot access the dashboard route; send them to Tasks.
- * Company + Admin/Manager pass through.
+ * Company + Manager pass through.
  */
 export function DashboardGate({ children }: { children: React.ReactNode }): React.ReactElement {
   const { user, accountType } = useAuth()

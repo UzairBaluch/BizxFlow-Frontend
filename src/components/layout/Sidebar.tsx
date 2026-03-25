@@ -51,8 +51,8 @@ const RAIL_WIDTH = 72
 
 function roleFromString(r: unknown): Role {
   if (r == null || typeof r !== 'string') return Role.Employee
-  if (r === 'Admin') return Role.Admin
-  if (r === 'Manager') return Role.Manager
+  const x = r.trim().toLowerCase()
+  if (x === 'manager' || x === 'admin') return Role.Manager
   return Role.Employee
 }
 
@@ -68,11 +68,10 @@ export function Sidebar(): React.ReactElement {
   const navigate = useNavigate()
   const isCompany = accountType === 'company'
   const role = user != null ? roleFromString(user.role) : Role.Employee
-  /** GET /dashboard — company JWT or Admin/Manager user JWT. */
-  const canSeeDashboard =
-    isCompany || (accountType === 'user' && (role === Role.Admin || role === Role.Manager))
-  /** Users / add-user: company or Admin/Manager user */
-  const canSeeManagement = isCompany || role === Role.Admin || role === Role.Manager
+  /** GET /dashboard — company JWT or Manager user JWT. */
+  const canSeeDashboard = isCompany || (accountType === 'user' && role === Role.Manager)
+  /** Users / add-user: company or Manager user */
+  const canSeeManagement = isCompany || role === Role.Manager
   const profileLabel = isCompany ? 'Company settings' : 'Profile'
 
   function handleLogout(): void {

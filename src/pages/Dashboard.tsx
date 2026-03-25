@@ -8,6 +8,7 @@ import { isLeavesListOk, parseLeavesFromResponse } from '@/lib/leaveListParse'
 import { isLeavePending } from '@/lib/leaveStatus'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useAuth } from '@/context/AuthContext'
+import { isManagerRole } from '@/lib/authAccess'
 import type { DashboardData } from '@/types/api'
 import type { RecentActivity } from '@/types/dashboard.types'
 import { StatCard } from '@/components/ui/StatCard'
@@ -29,7 +30,7 @@ function friendlyDashboardError(raw: string | undefined): string {
 }
 
 /**
- * Headcount for the stat card: everyone with a user login (Admin, Manager, Employee).
+ * Headcount for the stat card: everyone with a user login (Manager, Employee).
  * Excludes the company account. Prefer API field `totalTeamMembers`; fall back to legacy names.
  */
 function teamMemberCount(d: DashboardData | null | undefined): number {
@@ -84,10 +85,9 @@ export function DashboardPage(): React.ReactElement {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  /** GET /dashboard — company JWT or Admin/Manager user JWT (same KPIs; not Employee-only). */
+  /** GET /dashboard — company JWT or Manager user JWT (same KPIs; not Employee-only). */
   const canSeeDashboard =
-    accountType === 'company' ||
-    (accountType === 'user' && user != null && (user.role === 'Admin' || user.role === 'Manager'))
+    accountType === 'company' || (accountType === 'user' && user != null && isManagerRole(user.role))
   const compactCharts = useMediaQuery('(max-width: 480px)')
 
   useEffect(() => {

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { users as usersApi } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
-import { isAdminOrManagerRole } from '@/lib/authAccess'
+import { isManagerRole } from '@/lib/authAccess'
 import type { User, Role } from '@/types/api'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { DataTable, Pagination } from '@/components/ui/DataTable'
 
-const ROLES: Role[] = ['Admin', 'Manager', 'Employee']
+const ROLES: Role[] = ['Manager', 'Employee']
 
 const selectClassName =
   'w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-card)] px-3 py-2.5 font-body text-sm text-[var(--app-text)] outline-none focus:border-[var(--app-text)] disabled:opacity-50'
@@ -19,8 +19,7 @@ const selectClassName =
 function normalizeRoleValue(r: string | undefined): Role {
   if (r == null || r === '') return 'Employee'
   const x = r.trim().toLowerCase()
-  if (x === 'admin') return 'Admin'
-  if (x === 'manager') return 'Manager'
+  if (x === 'admin' || x === 'manager') return 'Manager'
   return 'Employee'
 }
 
@@ -35,8 +34,8 @@ function isUserMutationOk(res: unknown): boolean {
 
 export function UsersPage(): React.ReactElement {
   const { accountType, user } = useAuth()
-  const canListUsers = accountType === 'company' || (user != null && isAdminOrManagerRole(user.role))
-  /** Company, Admin, or Manager — edit roles & delete users (except self-delete for user sessions). */
+  const canListUsers = accountType === 'company' || (user != null && isManagerRole(user.role))
+  /** Company or Manager — edit roles & delete users (except self-delete for user sessions). */
   const canManageDirectory = canListUsers
   const canAddUser = canListUsers
   const [list, setList] = useState<User[]>([])
