@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -182,12 +182,6 @@ const PRICING_PLANS = [
   },
 ]
 
-
-const HERO_PHRASES = ['workforce management', 'team productivity', 'smart workplace', 'AI-powered teams']
-
-const TYPING_MS = 80
-const PAUSE_AFTER_TYPING_MS = 1800
-
 const container = {
   hidden: { opacity: 0 },
   show: {
@@ -205,31 +199,6 @@ export function LandingPage(): React.ReactElement {
   const theme = useThemeStore((s) => s.theme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [typedPhrase, setTypedPhrase] = useState('')
-  const [phraseIndex, setPhraseIndex] = useState(0)
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  useEffect(() => {
-    const target = HERO_PHRASES[phraseIndex]
-    const delay = isDeleting ? TYPING_MS / 2 : (typedPhrase === target ? PAUSE_AFTER_TYPING_MS : TYPING_MS)
-    const t = setTimeout(() => {
-      if (isDeleting) {
-        if (typedPhrase.length === 0) {
-          setIsDeleting(false)
-          setPhraseIndex((i) => (i + 1) % HERO_PHRASES.length)
-        } else {
-          setTypedPhrase(target.slice(0, typedPhrase.length - 1))
-        }
-      } else {
-        if (typedPhrase === target) {
-          setIsDeleting(true)
-        } else {
-          setTypedPhrase(target.slice(0, typedPhrase.length + 1))
-        }
-      }
-    }, delay)
-    return () => clearTimeout(t)
-  }, [typedPhrase, phraseIndex, isDeleting])
 
   const navLinks = (
     <>
@@ -332,12 +301,7 @@ export function LandingPage(): React.ReactElement {
           className="relative mx-auto max-w-3xl text-center"
         >
           <h1 className="font-display text-2xl font-bold leading-[1.2] tracking-tight sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
-            The complete{' '}
-            <span className="inline-block min-w-[0.5em] border-b-2 border-[var(--app-text)] border-opacity-80">
-              {typedPhrase}
-              <span className="animate-pulse" style={{ animationDuration: '1s' }}>|</span>
-            </span>
-            {' '}app
+            The complete workforce management app
           </h1>
           <p className="mt-3 max-w-2xl mx-auto font-body text-sm text-[var(--app-muted)] sm:mt-6 sm:text-base md:text-lg lg:text-xl">
             One platform for projects, meetings, and real-time chat—with smart attendance, leave approvals, AI briefings, and performance insights. Everything your team needs, in one place.
