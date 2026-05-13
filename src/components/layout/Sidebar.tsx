@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import type { LucideIcon } from 'lucide-react'
 import {
   LayoutGrid,
   Clock,
@@ -23,8 +24,11 @@ import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useSidebarStore } from '@/stores/useSidebarStore'
 import { useAuth } from '@/context/AuthContext'
+import { useNotifications } from '@/context/NotificationContext'
 import { Role } from '@/types/auth.types'
 import { BizxFlowLogo } from '@/components/BizxFlowLogo'
+import { formatNavBadgeCount, unreadNavBadgeCounts } from '@/lib/navNotificationBadges'
+import { useMemo, type ReactElement } from 'react'
 
 const DASHBOARD_ITEM = { path: '/dashboard', label: 'Dashboard', icon: LayoutGrid } as const
 const MAIN_NAV_REST = [
@@ -56,7 +60,56 @@ function roleFromString(r: unknown): Role {
   return Role.Employee
 }
 
-export function Sidebar(): React.ReactElement {
+type NavItemDef = { path: string; label: string; icon: LucideIcon }
+
+function SidebarNavLink(props: {
+  item: NavItemDef
+  isActive: boolean
+  isRailMode: boolean
+  navLinkClass: (active: boolean) => string
+  badgeCount: number
+  onNavigate: () => void
+}): ReactElement {
+  const { item, isActive, isRailMode, navLinkClass, badgeCount, onNavigate } = props
+  const Icon = item.icon
+  const badgeLabel = formatNavBadgeCount(badgeCount)
+  return (
+    <Link to={item.path} className={cn(navLinkClass(isActive), 'relative')} onClick={onNavigate}>
+      <span className="relative shrink-0">
+        <Icon className="h-5 w-5 shrink-0" aria-hidden />
+        {badgeCount > 0 && isRailMode ? (
+          <span
+            className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border border-[var(--app-border)] bg-[var(--app-text)] px-0.5 font-mono text-[8px] font-bold leading-none text-[var(--app-bg)] shadow-sm"
+            aria-label={`${badgeCount} unread updates for ${item.label}`}
+          >
+            {badgeCount > 9 ? '9+' : badgeCount}
+          </span>
+        ) : null}
+      </span>
+      <motion.span
+        initial={false}
+        animate={{ opacity: isRailMode ? 0 : 1 }}
+        transition={{ duration: 0.1 }}
+        className={cn(
+          'flex min-w-0 flex-1 items-center gap-2 overflow-hidden',
+          isRailMode && 'pointer-events-none w-0 min-w-0 flex-none'
+        )}
+      >
+        <span className="min-w-0 flex-1 truncate whitespace-nowrap">{item.label}</span>
+        {badgeCount > 0 && !isRailMode ? (
+          <span
+            className="ml-auto shrink-0 rounded-md bg-[var(--app-text)]/12 px-1.5 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-[var(--app-text)]"
+            aria-hidden
+          >
+            {badgeLabel}
+          </span>
+        ) : null}
+      </motion.span>
+    </Link>
+  )
+}
+
+export function Sidebar(): ReactElement {
   const collapsed = useSidebarStore((s) => s.collapsed)
   const toggle = useSidebarStore((s) => s.toggle)
   const setCollapsed = useSidebarStore((s) => s.setCollapsed)
@@ -64,8 +117,10 @@ export function Sidebar(): React.ReactElement {
   /** Desktop icon rail only; mobile is always full drawer or off-screen */
   const isRailMode = collapsed && !isNarrow
   const { user, company, accountType, logout } = useAuth()
+  const { notifications } = useNotifications()
   const location = useLocation()
   const navigate = useNavigate()
+  const navBadges = useMemo(() => unreadNavBadgeCounts(notifications), [notifications])
   const isCompany = accountType === 'company'
   const role = user != null ? roleFromString(user.role) : Role.Employee
   /** GET /dashboard — company JWT or Manager user JWT. */
@@ -139,36 +194,34 @@ export function Sidebar(): React.ReactElement {
           <p className={cn('mb-2.5 px-3 font-body text-[10px] font-semibold uppercase tracking-widest text-[var(--app-muted)]', isRailMode && 'sr-only')}>
             Main
           </p>
-          {(canSeeDashboard ? [DASHBOARD_ITEM, ...MAIN_NAV_REST] : [...MAIN_NAV_REST]).map((item) => {
-            const isActive = location.pathname === item.path
-            const Icon = item.icon
-            return (
-              <Link key={item.path} to={item.path} className={navLinkClass(isActive)} onClick={closeMobileMenu}>
-                <Icon className="h-5 w-5 shrink-0" />
-                <motion.span initial={false} animate={{ opacity: isRailMode ? 0 : 1 }} transition={{ duration: 0.1 }} className="overflow-hidden whitespace-nowrap">
-                  {item.label}
-                </motion.span>
-              </Link>
-            )
-          })}
+          {(canSeeDashboard ? [DASHBOARD_ITEM, ...MAIN_NAV_REST] : [...MAIN_NAV_REST]).map((item) => (
+            <SidebarNavLink
+              key={item.path}
+              item={item}
+              isActive={location.pathname === item.path}
+              isRailMode={isRailMode}
+              navLinkClass={navLinkClass}
+              badgeCount={navBadges[item.path] ?? 0}
+              onNavigate={closeMobileMenu}
+            />
+          ))}
         </div>
 
         <div className="mt-7 space-y-0.5">
           <p className={cn('mb-2.5 px-3 font-body text-[10px] font-semibold uppercase tracking-widest text-[var(--app-muted)]', isRailMode && 'sr-only')}>
             Features
           </p>
-          {FEATURES_NAV.map((item) => {
-            const isActive = location.pathname === item.path
-            const Icon = item.icon
-            return (
-              <Link key={item.path} to={item.path} className={navLinkClass(isActive)} onClick={closeMobileMenu}>
-                <Icon className="h-5 w-5 shrink-0" />
-                <motion.span initial={false} animate={{ opacity: isRailMode ? 0 : 1 }} transition={{ duration: 0.1 }} className="overflow-hidden whitespace-nowrap">
-                  {item.label}
-                </motion.span>
-              </Link>
-            )
-          })}
+          {FEATURES_NAV.map((item) => (
+            <SidebarNavLink
+              key={item.path}
+              item={item}
+              isActive={location.pathname === item.path}
+              isRailMode={isRailMode}
+              navLinkClass={navLinkClass}
+              badgeCount={navBadges[item.path] ?? 0}
+              onNavigate={closeMobileMenu}
+            />
+          ))}
         </div>
 
         {canSeeManagement && (

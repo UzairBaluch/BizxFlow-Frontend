@@ -171,13 +171,21 @@ export type Announcement = {
 };
 export type CreateAnnouncementBody = { title: string; body: string };
 
-/** Push + list payloads; `metadata` holds deep-link ids (`taskId`, `leaveId`, `announcementId`, …). */
+/**
+ * Push + list payloads. Backend `enrichNotificationMetadata()` adds aliases; UI resolves routes in `notificationDeepLink.ts`.
+ * Leave routing: **LEAVE_SUBMITTED** → company + managers (`notifyCompanyAndManagers`); **LEAVE_APPROVED** / **LEAVE_REJECTED** → employee (submitter).
+ * Examples: `leaveId`↔`leaveRequestId`/`requestId`/`leave_id`, `taskId`↔`task_id`, `assignedTo`→`assigneeId`, `announcementId`↔`announcement_id`,
+ * `attendanceId`↔`attendanceRecordId`/`recordId`, leave `submitterId`/`applicantId`/`employeeId`↔`userId`.
+ */
 export const IN_APP_NOTIFICATION_TYPES = [
   'TASK_ASSIGNED',
+  'TASK_STATUS_UPDATED',
   'LEAVE_SUBMITTED',
   'LEAVE_APPROVED',
   'LEAVE_REJECTED',
   'ANNOUNCEMENT_CREATED',
+  'ATTENDANCE_CHECK_IN',
+  'ATTENDANCE_CHECK_OUT',
 ] as const;
 export type InAppNotificationMetadata = {
   taskId?: string;

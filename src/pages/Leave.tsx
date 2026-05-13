@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { leave as leaveApi } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
+import { useNotifications } from '@/context/NotificationContext'
 import { isManagerRole } from '@/lib/authAccess'
 import { isLeavesListOk, parseLeavesFromResponse } from '@/lib/leaveListParse'
 import type { LeaveRequest, LeaveReviewStatus, LeaveTypeSubmit } from '@/types/api'
@@ -136,6 +137,7 @@ export function LeavePage(): React.ReactElement {
   const [reason, setReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const { addToast } = useToast()
+  const { refresh: refreshNotifications } = useNotifications()
 
   const load = useCallback(() => {
     setLoading(true)
@@ -210,7 +212,7 @@ export function LeavePage(): React.ReactElement {
     leaveApi
       .submit({ leaveType, startDate, endDate, reason: reason || undefined })
       .then((res) => {
-        if (res.success) {
+        if (isLeaveReviewOk(res)) {
           addToast('Leave submitted.')
           setStartDate('')
           setEndDate('')
@@ -218,6 +220,7 @@ export function LeavePage(): React.ReactElement {
           setLeaveType(LEAVE_TYPES[0].value)
           setPanelOpen(false)
           load()
+          void refreshNotifications()
         } else {
           addToast((res as { message: string }).message ?? 'Failed', 'error')
         }
@@ -230,6 +233,7 @@ export function LeavePage(): React.ReactElement {
       if (isLeaveReviewOk(res)) {
         addToast(status === 'Approved' ? 'Leave approved.' : 'Leave rejected.')
         load()
+        void refreshNotifications()
       } else {
         addToast((res as { message?: string }).message ?? 'Failed to update leave', 'error')
       }

@@ -1,5 +1,6 @@
 import { io, type Socket } from 'socket.io-client';
 import { getSocketOrigin } from '@/lib/apiOrigin';
+import { fetchCredentials } from '@/lib/fetchCredentials';
 
 let socket: Socket | null = null;
 
@@ -9,7 +10,9 @@ const SOCKET_PATH =
   (import.meta.env.VITE_SOCKET_IO_PATH as string | undefined)?.trim() || '/socket.io';
 
 /**
- * Real-time notification stream (**user** accessToken only; company JWT is rejected by the server).
+ * Real-time notifications: same API host as `VITE_API_BASE_URL`, `auth: { token: accessToken }`.
+ * Server joins **user** tokens to room `user:<userId>`, **company** tokens to `company:<companyId>`,
+ * then emits event `notification` with the same shape as the saved document. See `docs/FRONTEND-SOCKET.md`.
  * Reconnect after token rotation: `disconnectNotificationSocket()` then `connectNotificationSocket(newToken)`.
  */
 export function connectNotificationSocket(accessToken: string): Socket {
@@ -19,6 +22,7 @@ export function connectNotificationSocket(accessToken: string): Socket {
     path: SOCKET_PATH,
     auth: { token: accessToken },
     transports: ['websocket', 'polling'],
+    withCredentials: fetchCredentials() === 'include',
     autoConnect: true,
     reconnection: true,
     reconnectionDelay: 2000,

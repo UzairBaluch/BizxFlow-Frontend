@@ -1,10 +1,19 @@
 import type { InAppNotification } from '@/types/api';
 
+function notificationIdString(raw: unknown): string {
+  if (raw == null) return '';
+  if (typeof raw === 'string') return raw.trim();
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw);
+  if (typeof raw === 'object' && raw !== null && '$oid' in raw && typeof (raw as { $oid: unknown }).$oid === 'string') {
+    return (raw as { $oid: string }).$oid.trim();
+  }
+  return '';
+}
+
 export function parseInAppNotificationDoc(doc: unknown): InAppNotification | null {
   if (doc == null || typeof doc !== 'object' || Array.isArray(doc)) return null;
   const d = doc as Record<string, unknown>;
-  const idRaw = d._id ?? d.id;
-  const id = typeof idRaw === 'string' ? idRaw : idRaw != null ? String(idRaw) : '';
+  const id = notificationIdString(d._id ?? d.id ?? d.notificationId ?? d.notification_id);
   if (!id) return null;
   const title = typeof d.title === 'string' ? d.title : '';
   const body = typeof d.body === 'string' ? d.body : '';

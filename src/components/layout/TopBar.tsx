@@ -14,8 +14,11 @@ export interface TopBarProps {
 export function TopBar({ title, onMenuClick, menuOpen }: TopBarProps): React.ReactElement {
   const theme = useThemeStore((s) => s.theme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
-  const { user, company } = useAuth()
-  const withNotificationBell = user != null && company == null
+  const { user, accountType, token } = useAuth()
+  const withNotificationBell =
+    token != null &&
+    token.length > 0 &&
+    ((accountType === 'user' && user != null) || accountType === 'company')
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between gap-2 overflow-visible border-b border-[var(--app-border)] bg-[var(--app-bg)] px-3 py-2.5 sm:h-14 sm:py-0 sm:gap-4 sm:px-5 md:px-7">

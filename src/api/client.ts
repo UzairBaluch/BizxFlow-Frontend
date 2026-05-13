@@ -4,6 +4,7 @@
  */
 import type { ApiResponse } from '../types/api';
 import { API_ORIGIN } from '../lib/apiOrigin';
+import { fetchCredentials } from '../lib/fetchCredentials';
 
 const API_BASE = API_ORIGIN;
 
@@ -27,9 +28,7 @@ export async function apiRequest<T>(
   if (token) {
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
-  // Use 'omit' so CORS works with backend that sends Access-Control-Allow-Origin: *
-  // (with credentials: 'include', the server cannot use * and must send the exact origin)
-  const res = await fetch(url, { ...init, headers, credentials: 'omit' });
+  const res = await fetch(url, { ...init, headers, credentials: fetchCredentials() });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
     const rawMessage =
@@ -296,9 +295,15 @@ export const announcements = {
 };
 
 /**
- * In-app notifications (**user JWT only** — not company). History + read state via REST; Socket.io pushes new rows.
- * **Which users get a notification** for check-in/out, leave, task status, etc. is server-side; see `docs/API_INTEGRATION.md` → *Who receives in-app / company notifications*.
- * If `markRead` path differs on your server, adjust here to match OpenAPI.
+ * In-app notifications — see `docs/API_INTEGRATION.md`, `docs/FRONTEND-SOCKET.md`, live `/api-docs`.
+ *
+ * **User JWT:** `GET /my-notifications`, `GET /unread-count`, `PATCH /my-notifications/read-all`,
+ * `PATCH /my-notifications/:notificationId/read`
+ *
+ * **Company JWT:** `GET /company-notifications`, `GET /company-notifications/unread-count`,
+ * `PATCH /company-notifications/read-all`, `PATCH /company-notifications/:notificationId/read`
+ *
+ * All paths below are under `/api/v1/users/`.
  */
 export const notifications = {
   mine: (params?: { page?: number; limit?: number }) => {
@@ -310,11 +315,26 @@ export const notifications = {
       `/api/v1/users/my-notifications${q ? `?${q}` : ''}`
     );
   },
+  /** Company org inbox — `type: company` JWT only. */
+  companyInbox: (params?: { page?: number; limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.page != null) sp.set('page', String(params.page));
+    if (params?.limit != null) sp.set('limit', String(params.limit));
+    const q = sp.toString();
+    return apiRequest<{ notifications?: import('../types/api').InAppNotification[] } | import('../types/api').InAppNotification[]>(
+      `/api/v1/users/company-notifications${q ? `?${q}` : ''}`
+    );
+  },
   unreadCount: () =>
     apiRequest<{ unreadCount?: number; count?: number }>('/api/v1/users/unread-count'),
+  companyUnreadCount: () =>
+    apiRequest<{ unreadCount?: number; count?: number }>('/api/v1/users/company-notifications/unread-count'),
+  markAllRead: () =>
+    apiRequest<unknown>('/api/v1/users/my-notifications/read-all', { method: 'PATCH', body: '{}' }),
+  companyMarkAllRead: () =>
+    apiRequest<unknown>('/api/v1/users/company-notifications/read-all', { method: 'PATCH', body: '{}' }),
   /**
-   * Mark one notification read. Tries `my-notifications/.../read` first, then `notifications/.../read`
-   * (covers either OpenAPI style).
+   * Mark one read. Fallback `PATCH /notifications/:id/read` on 404 for older servers.
    */
   markRead: async (notificationId: string) => {
     const e = encodeURIComponent(notificationId);
@@ -334,6 +354,13 @@ export const notifications = {
       });
     }
     return primary;
+  },
+  companyMarkRead: async (notificationId: string) => {
+    const e = encodeURIComponent(notificationId);
+    return apiRequest<unknown>(`/api/v1/users/company-notifications/${e}/read`, {
+      method: 'PATCH',
+      body: '{}',
+    });
   },
 };
 

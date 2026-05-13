@@ -7,9 +7,19 @@ function trimBase(raw: string): string {
   return raw.replace(/\/$/, '');
 }
 
-export const API_ORIGIN = trimBase(
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() || DEFAULT_API
-);
+const envBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() ?? '';
+
+/**
+ * In development, leave `VITE_API_BASE_URL` unset so requests use same-origin `/api/...`
+ * and Vite proxies to the real API (avoids browser CORS on preflight).
+ * In production builds, set `VITE_API_BASE_URL` to your API origin, or the bundled default below is used.
+ */
+export const API_ORIGIN =
+  envBase.length > 0
+    ? trimBase(envBase)
+    : import.meta.env.DEV
+      ? ''
+      : trimBase(DEFAULT_API);
 
 /**
  * Socket.io must connect to **origin** (scheme + host + port). If `VITE_API_BASE_URL`
@@ -18,21 +28,25 @@ export const API_ORIGIN = trimBase(
  */
 export function getSocketOrigin(): string {
   const raw = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
-  if (raw == null || raw === '') {
+  if (raw != null && raw !== '') {
+    if (raw.startsWith('/')) {
+      if (typeof window !== 'undefined') return window.location.origin;
+      return 'http://localhost:5173';
+    }
     try {
-      return new URL(DEFAULT_API.startsWith('http') ? DEFAULT_API : `https://${DEFAULT_API}`).origin;
+      const withProtocol = raw.startsWith('http') ? raw : `https://${raw}`;
+      return new URL(withProtocol).origin;
     } catch {
-      return trimBase(DEFAULT_API);
+      return API_ORIGIN.split('/').slice(0, 3).join('/') || API_ORIGIN;
     }
   }
-  if (raw.startsWith('/')) {
+  if (import.meta.env.DEV) {
     if (typeof window !== 'undefined') return window.location.origin;
     return 'http://localhost:5173';
   }
   try {
-    const withProtocol = raw.startsWith('http') ? raw : `https://${raw}`;
-    return new URL(withProtocol).origin;
+    return new URL(DEFAULT_API.startsWith('http') ? DEFAULT_API : `https://${DEFAULT_API}`).origin;
   } catch {
-    return API_ORIGIN.split('/').slice(0, 3).join('/') || API_ORIGIN;
+    return trimBase(DEFAULT_API);
   }
 }

@@ -4,6 +4,7 @@ import { Bell } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useNotifications } from '@/context/NotificationContext'
 import type { InAppNotification } from '@/types/api'
+import { notificationTargetPath } from '@/lib/notificationDeepLink'
 import { cn } from '@/lib/utils'
 
 const DROPDOWN_LIMIT = 12
@@ -21,7 +22,11 @@ export type NotificationBellProps = {
 }
 
 export function NotificationBell({ buttonClassName }: NotificationBellProps): React.ReactElement | null {
-  const { user, company } = useAuth()
+  const { user, accountType, token } = useAuth()
+  const showBell =
+    token != null &&
+    token.length > 0 &&
+    ((accountType === 'user' && user != null) || accountType === 'company')
   const navigate = useNavigate()
   const { notifications, unreadCount, markAsRead } = useNotifications()
   const [open, setOpen] = useState(false)
@@ -48,23 +53,11 @@ export function NotificationBell({ buttonClassName }: NotificationBellProps): Re
 
   const handleItemClick = useCallback(
     (n: InAppNotification): void => {
-      const m = n.metadata
-      if (m?.taskId) {
-        void markAsRead(n._id)
+      const path = notificationTargetPath(n)
+      if (path != null) {
+        if (!n.read) void markAsRead(n._id)
         close()
-        navigate('/tasks')
-        return
-      }
-      if (m?.leaveId) {
-        void markAsRead(n._id)
-        close()
-        navigate('/leave')
-        return
-      }
-      if (m?.announcementId) {
-        void markAsRead(n._id)
-        close()
-        navigate('/announcements')
+        navigate(path)
         return
       }
       if (!n.read) void markAsRead(n._id)
@@ -74,7 +67,7 @@ export function NotificationBell({ buttonClassName }: NotificationBellProps): Re
     [markAsRead, navigate, close]
   )
 
-  if (!(user != null && company == null)) return null
+  if (!showBell) return null
 
   const preview = notifications.slice(0, DROPDOWN_LIMIT)
 

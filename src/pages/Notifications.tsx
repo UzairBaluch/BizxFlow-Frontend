@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Bell } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { InAppNotification } from '@/types/api'
+import { notificationTargetPath } from '@/lib/notificationDeepLink'
 import { cn } from '@/lib/utils'
 
 function formatWhen(iso: string | undefined): string {
@@ -22,33 +23,25 @@ function typeLabel(type: string): string {
 }
 
 export function NotificationsPage(): React.ReactElement {
-  const { accountType } = useAuth()
+  const { accountType, user, token } = useAuth()
   const navigate = useNavigate()
-  const { notifications, unreadCount, loading, refresh, markAsRead } = useNotifications()
-  const isUser = accountType === 'user'
+  const { notifications, unreadCount, loading, refresh, markAsRead, markAllAsRead } = useNotifications()
+  const canUsePage =
+    token != null &&
+    token.length > 0 &&
+    ((accountType === 'user' && user != null) || accountType === 'company')
 
   function handleOpen(n: InAppNotification): void {
-    if (!isUser) return
-    const m = n.metadata
-    if (m?.taskId) {
-      void markAsRead(n._id)
-      navigate('/tasks')
-      return
-    }
-    if (m?.leaveId) {
-      void markAsRead(n._id)
-      navigate('/leave')
-      return
-    }
-    if (m?.announcementId) {
-      void markAsRead(n._id)
-      navigate('/announcements')
+    const path = notificationTargetPath(n)
+    if (path != null) {
+      if (!n.read) void markAsRead(n._id)
+      navigate(path)
       return
     }
     if (!n.read) void markAsRead(n._id)
   }
 
-  if (!isUser) {
+  if (!canUsePage) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -57,7 +50,7 @@ export function NotificationsPage(): React.ReactElement {
           </div>
           <div>
             <h1 className="font-display text-xl font-semibold tracking-tight text-[var(--app-text)]">Notifications</h1>
-            <p className="font-body text-sm text-[var(--app-muted)]">Sign in as a team member to see in-app notifications.</p>
+            <p className="font-body text-sm text-[var(--app-muted)]">Sign in to see in-app notifications.</p>
           </div>
         </div>
       </div>
@@ -79,9 +72,16 @@ export function NotificationsPage(): React.ReactElement {
             </p>
           </div>
         </div>
-        <Button type="button" variant="secondary" size="sm" onClick={() => void refresh()} disabled={loading}>
-          Refresh
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {unreadCount > 0 ? (
+            <Button type="button" variant="secondary" size="sm" onClick={() => void markAllAsRead()} disabled={loading}>
+              Mark all read
+            </Button>
+          ) : null}
+          <Button type="button" variant="secondary" size="sm" onClick={() => void refresh()} disabled={loading}>
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <Card className="p-0 overflow-hidden">

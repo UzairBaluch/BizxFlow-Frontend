@@ -3,6 +3,7 @@ import { tasks as tasksApi, users as usersApi } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { isManagerRole } from '@/lib/authAccess'
 import { useToast } from '@/context/ToastContext'
+import { useNotifications } from '@/context/NotificationContext'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { Task, User } from '@/types/api'
 import { TaskStatus } from '@/types/task.types'
@@ -410,6 +411,7 @@ export function TasksPage(): React.ReactElement {
   /** userId → display name for assignee column when `assignedTo` is not populated. */
   const [assigneeNameById, setAssigneeNameById] = useState<Record<string, string>>({})
   const { addToast } = useToast()
+  const { refresh: refreshNotifications } = useNotifications()
   const isCompactTasks = useMediaQuery('(max-width: 767px)')
 
   /**
@@ -611,6 +613,7 @@ export function TasksPage(): React.ReactElement {
       if (optimistic != null) {
         setList((prev) => (prev.some((p) => p._id === optimistic!._id) ? prev : [optimistic!, ...prev]))
       }
+      void refreshNotifications()
     } catch {
       addToast('Could not create task. Check your connection.', 'error')
     } finally {
@@ -633,6 +636,7 @@ export function TasksPage(): React.ReactElement {
         addToast('Task updated.')
         setList((prev) => prev.map((t) => (t._id === task._id ? { ...t, status: next } : t)))
         void load()
+        void refreshNotifications()
       } else {
         addToast(getApiMessage(res) ?? 'Failed to update status', 'error')
       }

@@ -48,7 +48,7 @@ cp .env.example .env
 # VITE_API_BASE_URL=https://your-api-url.com
 ```
 
-**Backend alignment:** see [`docs/API_INTEGRATION.md`](docs/API_INTEGRATION.md) for auth modes (`company` vs `user`), who can call which endpoints, and request shapes. Live OpenAPI: `/api-docs` and `/api-docs.json` on the API host.
+**Backend alignment:** [`docs/API_INTEGRATION.md`](docs/API_INTEGRATION.md) (features + notification routes), [`docs/FRONTEND_API_SUMMARY.md`](docs/FRONTEND_API_SUMMARY.md) (accounts, roles, notifications overview), [`docs/FRONTEND-SOCKET.md`](docs/FRONTEND-SOCKET.md) (Socket.io rooms). Live OpenAPI: `/api-docs` and `/api-docs.json` on the API host. High-level roadmap pointers: [`ROADMAP.md`](ROADMAP.md).
 
 ## Run
 

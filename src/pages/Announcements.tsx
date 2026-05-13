@@ -3,6 +3,7 @@ import { announcements as announcementsApi } from '@/api/client'
 import { useAuth } from '@/context/AuthContext'
 import { isManagerRole } from '@/lib/authAccess'
 import { useToast } from '@/context/ToastContext'
+import { useNotifications } from '@/context/NotificationContext'
 import type { Announcement } from '@/types/api'
 import { Card, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -22,6 +23,7 @@ function parseAnnouncementsPayload(data: unknown): Announcement[] {
 export function AnnouncementsPage(): React.ReactElement {
   const { user, accountType } = useAuth()
   const { addToast } = useToast()
+  const { refresh: refreshNotifications } = useNotifications()
   const canCreate =
     accountType === 'company' || isManagerRole(user?.role)
 
@@ -66,6 +68,8 @@ export function AnnouncementsPage(): React.ReactElement {
       setTitle('')
       setBody('')
       load()
+      /** Recipients get rows via API/socket; refresh helps this client if you also receive org copies. */
+      void refreshNotifications()
     } else {
       addToast((res as { message: string }).message ?? 'Failed to publish', 'error')
     }

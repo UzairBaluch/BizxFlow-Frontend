@@ -32,23 +32,24 @@ Success bodies include `success`, `data`, `message`, and often `statusCode`. Err
 | Announcements list | Authenticated; **POST** Company or Manager |
 | `PATCH /update-user-role/:userId` | **Company JWT** or **Manager** — body `{ role: "Manager" \| "Employee" }` (exact strings; confirm OpenAPI). **200** + usual `ApiResponse`, **`data`**: updated user (no `password` / `refreshToken`). **400** invalid `userId`; **404** wrong tenant or user missing; **403** cannot change **your own** role when logged in as a **user** JWT; other guards per backend (e.g. last elevated manager). Frontend: Users **Edit** modal → Save role. |
 | `DELETE /delete-user/:userId` | **Company JWT** or **Manager** — no body. **200** + **`data: { deleted: true }`**. **404** tenant/user; **403** cannot delete **yourself**; other rules per backend. Frontend: Users **Edit** → remove (hidden for your own row when signed in as that user). |
-| **User notifications (REST)** | **`GET /my-notifications`** — list/history (optional `page`, `limit`). Frontend accepts `data.notifications`, top-level `notifications`, `data.items`, etc. **`GET /unread-count`** — `unreadCount`, `count`, `unread`, `totalUnread` on `data` or root. **`PATCH /my-notifications/:id/read`** then **`PATCH /notifications/:id/read`** on 404 (see `client.ts`). Optional **`PATCH .../read-all`** per OpenAPI. **User JWT only** — not company. |
-| **User notifications (Socket.io)** | Connect to **`URL.origin`** of `VITE_API_BASE_URL` (path stripped), default **`path: /socket.io`**, **`auth: { token }`**, transports websocket + polling. Optional **`VITE_SOCKET_IO_PATH`** if the server uses a custom path. Event **`notification`**: document or `{ notification \| data \| doc: {...} }`. **User JWT only**. |
+| **Notifications (REST)** | **User JWT:** `GET /my-notifications`, `GET /unread-count`, `PATCH /my-notifications/read-all`, `PATCH /my-notifications/:notificationId/read`. **Company JWT:** `GET /company-notifications`, `GET /company-notifications/unread-count`, `PATCH /company-notifications/read-all`, `PATCH /company-notifications/:notificationId/read`. All under `/api/v1/users/`. List payloads: `data.notifications`, top-level `notifications`, `data.items`, etc. (`client.ts`). |
+| **Notifications (Socket.io)** | Same API host; **`auth: { token }`**. User → room **`user:<userId>`**; company → **`company:<companyId>`**. Event **`notification`**: same shape as saved doc (or wrapped — see `NotificationContext`). Details: **`docs/FRONTEND-SOCKET.md`**. |
+
+**Data model (reference):** each row has **`companyId`** and either **`recipient` (User)** or **`recipientCompany` (Company)**, not both. Server may batch **`notifyCompanyAndManagers`** (one company row + one per Manager; optional **`skipManagerUserIds`** for the actor).
 
 See the full guide in your project docs or backend README for the complete table.
 
-## Who receives in-app / company notifications (backend)
+## Notification event types → recipients (backend)
 
-The SPA only **displays** notifications for **user** JWTs (`/my-notifications` + Socket). **Who gets a row** when someone checks in/out, submits leave, or updates task status must be decided **on the server** when the event is handled.
+| Type | Who gets it |
+|------|-------------|
+| `TASK_ASSIGNED` | Assignee (personal copy); company + managers (org copy). Assigning manager omitted from extra manager rows if applicable. |
+| `TASK_STATUS_UPDATED` | Company + managers; updating manager skipped if applicable. |
+| `LEAVE_SUBMITTED` | Company + managers; submitter skipped if they’re a manager. |
+| `LEAVE_APPROVED` / `LEAVE_REJECTED` | Employee (submitter). |
+| `ANNOUNCEMENT_CREATED` | All users in tenant (poster skipped on their user JWT). |
+| `ATTENDANCE_CHECK_IN` / `ATTENDANCE_CHECK_OUT` | Company + managers. |
 
-There is no **`Admin`** user role; use **Manager** where you previously targeted “elevated users.”
+There is no **`Admin`** user role — use **Manager** for elevated staff. Frontend **`IN_APP_NOTIFICATION_TYPES`** in `src/types/api.ts` lists known type strings for reference.
 
-| Trigger | Actor: **Employee** | Actor: **Manager** |
-|--------|---------------------|---------------------|
-| Check-in / check-out | All **Manager** users in tenant **+** **Company** channel | **Company** only (do **not** fan out to other Managers) |
-| Leave submit | Managers **+** Company | Company only |
-| Task status update (assignee) | Managers **+** Company | Company only |
-
-**Company** here means whatever channel the backend uses for the company account (e.g. company activity feed, email, or a future company JWT notification API). This frontend does not call `my-notifications` with a company token today.
-
-Omit the **actor** from recipient lists if you want no self-notifications on their own actions.
+Omit the **actor** from recipient lists when you want no self-notifications on their own actions.
